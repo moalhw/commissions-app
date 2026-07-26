@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام متابعة الفواتير والعمولات</title>
+    <!-- Tailwind CSS للتصميم -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- مكتبة Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- خط تجوال من جوجل -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Tajawal', sans-serif; }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+    <!-- شريط القائمة العلوية -->
+    <header class="bg-indigo-900 text-white shadow-lg no-print">
+        <div class="container mx-auto px-4 py-4 flex flex-wrap justify-between items-center">
+            <h1 class="text-xl font-bold flex items-center gap-2">
+                <span>📊</span> نظام إدارة العمولات والفواتير
+            </h1>
+            <nav class="flex gap-2 mt-2 sm:mt-0 flex-wrap">
+                <button onclick="showTab('dashboard')" class="px-3 py-1.5 rounded hover:bg-indigo-800 transition">لوحة التحكم</button>
+                <button onclick="showTab('invoices')" class="px-3 py-1.5 rounded hover:bg-indigo-800 transition">الفواتير والعمولات</button>
+                <button onclick="showTab('customers')" class="px-3 py-1.5 rounded hover:bg-indigo-800 transition">العملاء والمندوبين</button>
+                <button onclick="showTab('settings')" class="px-3 py-1.5 rounded hover:bg-indigo-800 transition">الإعدادات والمناطق</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-6">
+
+        <!-- 1. لوحة التحكم (Dashboard) -->
+        <section id="dashboard-tab" class="tab-content space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 no-print">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <p class="text-sm text-slate-500">إجمالي الفواتير النشطة</p>
+                    <h3 id="stat-total-invoices" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
+                </div>
+                <div class="bg-emerald-50 p-5 rounded-xl shadow-sm border border-emerald-200">
+                    <p class="text-sm text-emerald-600 font-medium">عمولات مستحقة (خلال المهلة)</p>
+                    <h3 id="stat-valid-commissions" class="text-2xl font-bold text-emerald-700 mt-1">0 ر.س</h3>
+                </div>
+                <div class="bg-rose-50 p-5 rounded-xl shadow-sm border border-rose-200">
+                    <p class="text-sm text-rose-600 font-medium">عمولات ملغاة (تجاوزت 30 يوماً)</p>
+                    <h3 id="stat-lost-commissions" class="text-2xl font-bold text-rose-700 mt-1">0 ر.س</h3>
+                </div>
+                <div class="bg-amber-50 p-5 rounded-xl shadow-sm border border-amber-200">
+                    <p class="text-sm text-amber-600 font-medium">فواتير تقترب من انتهاء المهلة</p>
+                    <h3 id="stat-warning-invoices" class="text-2xl font-bold text-amber-700 mt-1">0</h3>
+                </div>
+            </div>
+
+            <!-- جدول الفواتير الحرجة للتصرف السريع -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-slate-800">⚠️ فواتير تتطلب التحصيل الفوري (تنبيه المندوبين)</h2>
+                    <button onclick="window.print()" class="no-print bg-slate-100 px-3 py-1 rounded text-sm text-slate-600 hover:bg-slate-200">طباعة التقرير</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 text-sm border-b">
+                                <th class="p-3">رقم الفاتورة</th>
+                                <th class="p-3">العميل</th>
+                                <th class="p-3">المندوب/المنطقة</th>
+                                <th class="p-3">تاريخ الفاتورة</th>
+                                <th class="p-3">المبلغ</th>
+                                <th class="p-3">الحالة والمهلة</th>
+                                <th class="p-3 no-print">تواصل سريع</th>
+                            </tr>
+                        </thead>
+                        <tbody id="urgent-invoices-list" class="divide-y divide-slate-100 text-sm">
+                            <!-- يتم التحميل هنا ديناميكياً -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. قسم إدارة الفواتير (Invoices) -->
+        <section id="invoices-tab" class="tab-content hidden space-y-6">
+            <!-- نموذج إضافة فاتورة جديدة -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 no-print">
+                <h2 class="text-lg font-bold mb-4 text-slate-800">إدخال فاتورة جديدة</h2>
+                <form id="add-invoice-form" onsubmit="handleAddInvoice(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">رقم الفاتورة</label>
+                        <input type="text" id="inv-num" required class="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">العميل</label>
+                        <select id="inv-customer" required onchange="autoFillRepRegion()" class="w-full p-2 border rounded text-sm">
+                            <!-- تحميل قائمة العملاء -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">مبلغ الفاتورة (ر.س)</label>
+                        <input type="number" step="0.01" id="inv-amount" required class="w-full p-2 border rounded text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">نسبة العمولة (%)</label>
+                        <input type="number" step="0.1" id="inv-comm-rate" value="5" required class="w-full p-2 border rounded text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">تاريخ الفاتورة</label>
+                        <input type="date" id="inv-date" required class="w-full p-2 border rounded text-sm">
+                    </div>
+                    <div class="md:col-span-3 flex items-end">
+                        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-2 rounded hover:bg-indigo-700 transition">حفظ الفاتورة</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- قائمة الفواتير الشاملة -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                <h2 class="text-lg font-bold mb-4 text-slate-800">سجل الفواتير والعمولات</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 text-sm border-b">
+                                <th class="p-3">رقم الفاتورة</th>
+                                <th class="p-3">العميل</th>
+                                <th class="p-3">المندوب</th>
+                                <th class="p-3">التاريخ</th>
+                                <th class="p-3">المبلغ</th>
+                                <th class="p-3">العمولة</th>
+                                <th class="p-3">متبقي/متأخر (يوم)</th>
+                                <th class="p-3">حالة العمولة</th>
+                                <th class="p-3 no-print">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-invoices-list" class="divide-y divide-slate-100 text-sm">
+                            <!-- تحميل البيانات -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. إدارة العملاء والمندوبين (Customers & Reps) -->
+        <section id="customers-tab" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 no-print">
+                <!-- إدخال مندوب -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-md font-bold mb-3">إضافة مندوب مبيعات</h2>
+                    <form onsubmit="handleAddRep(event)" class="space-y-3">
+                        <input type="text" id="rep-name" placeholder="اسم المندوب" required class="w-full p-2 border rounded text-sm">
+                        <input type="tel" id="rep-phone" placeholder="رقم الجوال (مثال: 966500000000)" required class="w-full p-2 border rounded text-sm">
+                        <select id="rep-region" required class="w-full p-2 border rounded text-sm">
+                            <!-- قائمة المناطق -->
+                        </select>
+                        <button type="submit" class="w-full bg-slate-800 text-white py-2 rounded text-sm font-bold">إضافة المندوب</button>
+                    </form>
+                </div>
+
+                <!-- إدخال عميل -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-md font-bold mb-3">إضافة عميل جديد</h2>
+                    <form onsubmit="handleAddCustomer(event)" class="space-y-3">
+                        <input type="text" id="cust-name" placeholder="اسم العميل / الشركة" required class="w-full p-2 border rounded text-sm">
+                        <input type="tel" id="cust-phone" placeholder="رقم الواتساب (مثال: 966500000000)" required class="w-full p-2 border rounded text-sm">
+                        <select id="cust-rep" required class="w-full p-2 border rounded text-sm">
+                            <!-- قائمة المندوبين -->
+                        </select>
+                        <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded text-sm font-bold">إضافة العميل</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- عرض قوائم العملاء -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-lg font-bold mb-3">قائمة العملاء المسجلين</h2>
+                <div id="customers-list-container" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- كروت العملاء -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. الإعدادات والمناطق (Settings) -->
+        <section id="settings-tab" class="tab-content hidden space-y-6">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 max-w-2xl mx-auto space-y-4">
+                <h2 class="text-lg font-bold text-slate-800">إعدادات النظام العامة</h2>
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">أيام مهلة العمولة (الحد الأقصى للتأخير)</label>
+                    <input type="number" id="setting-grace-days" class="w-full p-2 border rounded text-sm" value="30">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">قالب رسالة الواتساب التلقائية</label>
+                    <textarea id="setting-wa-template" rows="3" class="w-full p-2 border rounded text-sm">مرحباً {customer_name}، نود تذكيركم بالفاتورة رقم {invoice_number} بقيمة {amount} ر.س. المتبقي على الاستحقاق: {days_left} يوم.</textarea>
+                    <p class="text-xs text-slate-400 mt-1">المتغيرات المتاحة: {customer_name}, {invoice_number}, {amount}, {days_left}</p>
+                </div>
+
+                <button onclick="saveSettings()" class="bg-emerald-600 text-white font-bold px-4 py-2 rounded text-sm">حفظ الإعدادات</button>
+
+                <hr class="my-6">
+
+                <h3 class="text-md font-bold text-slate-800">إدارة المناطق الجغرافية</h3>
+                <form onsubmit="handleAddRegion(event)" class="flex gap-2">
+                    <input type="text" id="region-name" placeholder="اسم المنطقة الجديدة (مثال: المنطقة الوسطى)" required class="flex-1 p-2 border rounded text-sm">
+                    <button type="submit" class="bg-slate-700 text-white px-4 py-2 rounded text-sm font-bold">إضافة</button>
+                </form>
+                <ul id="regions-list" class="divide-y text-sm mt-3"></ul>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- البرمجة والربط بـ Supabase -->
+    <script>
+        // 1. ربط المفاتيح الخاصة بمشروعك
+        const SUPABASE_URL = 'https://lyieimsifdynazgwqurn.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5aWVpbXNpZmR5bmF6Z3dxdXJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwODA2OTQsImV4cCI6MjEwMDY1NjY5NH0.sGiTYhUHwsZcYiLyB2enkvB01kJwaTZJ8YyHQD3HPEk';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let globalSettings = { grace_period_days: 30, whatsapp_template: '' };
+        let customersData = [], repsData = [], regionsData = [], invoicesData = [];
+
+        // عند تحميل الصفحة
+        window.onload = async () => {
+            document.getElementById('inv-date').valueAsDate = new Date();
+            await loadAllData();
+        };
+
+        // التنقل بين التبويبات
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`${tabId}-tab`).classList.remove('hidden');
+        }
+
+        // جلب البيانات الشاملة من Supabase
+        async function loadAllData() {
+            // جلب الإعدادات
+            let { data: set } = await supabase.from('settings').select('*').single();
+            if(set) {
+                globalSettings = set;
+                document.getElementById('setting-grace-days').value = set.grace_period_days;
+                document.getElementById('setting-wa-template').value = set.whatsapp_template;
+            }
+
+            // جلب المناطق والمندوبين والعملاء والفواتير
+            let { data: reg } = await supabase.from('regions').select('*');
+            regionsData = reg || [];
+
+            let { data: reps } = await supabase.from('sales_reps').select('*, regions(name)');
+            repsData = reps || [];
+
+            let { data: cust } = await supabase.from('customers').select('*, sales_reps(name, phone), regions(name)');
+            customersData = cust || [];
+
+            let { data: inv } = await supabase.from('invoices').select('*, customers(*, sales_reps(*))');
+            invoicesData = inv || [];
+
+            renderDropdowns();
+            renderInvoices();
+            renderCustomers();
+            renderDashboardStats();
+        }
+
+        // حساب الأيام المتبقية أو المتأخرة
+        function calculateDaysInfo(invoiceDateStr) {
+            const invDate = new Date(invoiceDateStr);
+            const today = new Date();
+            const diffTime = today - invDate;
+            const daysPassed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            const graceDays = globalSettings.grace_period_days || 30;
+            const daysLeft = graceDays - daysPassed;
+
+            return { daysPassed, daysLeft, graceDays };
+        }
+
+        // عرض الفواتير وحالة العمولات
+        function renderInvoices() {
+            const urgentList = document.getElementById('urgent-invoices-list');
+            const allList = document.getElementById('all-invoices-list');
+            
+            urgentList.innerHTML = '';
+            allList.innerHTML = '';
+
+            invoicesData.forEach(inv => {
+                const { daysPassed, daysLeft } = calculateDaysInfo(inv.invoice_date);
+                const commAmount = (inv.amount * (inv.commission_rate / 100)).toFixed(2);
+                const custName = inv.customers?.name || 'غير محدد';
+                const repName = inv.customers?.sales_reps?.name || 'غير محدد';
+                const custPhone = inv.customers?.phone || '';
+
+                // تحدد لون وحالة العمولة
+                let statusBadge = '';
+                if(daysLeft < 0) {
+                    statusBadge = `<span class="bg-rose-100 text-rose-800 px-2 py-1 rounded-full text-xs font-bold">ملغاة (متأخرة ${Math.abs(daysLeft)} يوم)</span>`;
+                } else if(daysLeft <= 10) {
+                    statusBadge = `<span class="bg-amber-100 text-amber-800 px-2 py-1 rounded-full text-xs font-bold">تحذير (باقي ${daysLeft} يوم)</span>`;
+                } else {
+                    statusBadge = `<span class="bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full text-xs font-bold">سليمة (باقي ${daysLeft} يوم)</span>`;
+                }
+
+                // رابط واتساب مخصص
+                const waMessage = encodeURIComponent(
+                    globalSettings.whatsapp_template
+                        .replace('{customer_name}', custName)
+                        .replace('{invoice_number}', inv.invoice_number)
+                        .replace('{amount}', inv.amount)
+                        .replace('{days_left}', daysLeft > 0 ? daysLeft : `متأخرة ${Math.abs(daysLeft)}`)
+                );
+                const waBtn = `<a href="https://wa.me/${custPhone}?text=${waMessage}" target="_blank" class="bg-emerald-500 text-white px-2 py-1 rounded text-xs hover:bg-emerald-600 flex items-center justify-center gap-1">📱 واتساب</a>`;
+
+                // إضافة للجدول الشامل
+                allList.innerHTML += `
+                    <tr>
+                        <td class="p-3 font-bold">${inv.invoice_number}</td>
+                        <td class="p-3">${custName}</td>
+                        <td class="p-3">${repName}</td>
+                        <td class="p-3">${inv.invoice_date}</td>
+                        <td class="p-3 font-bold">${inv.amount} ر.س</td>
+                        <td class="p-3 text-emerald-600 font-bold">${commAmount} ر.س</td>
+                        <td class="p-3 font-bold ${daysLeft < 0 ? 'text-rose-600' : 'text-slate-700'}">${daysLeft}</td>
+                        <td class="p-3">${statusBadge}</td>
+                        <td class="p-3 no-print">${waBtn}</td>
+                    </tr>
+                `;
+
+                // إذا كانت الفاتورة حَرِجة أو ملغاة تُضاف للوحة التحكم للإنذار
+                if(daysLeft <= 10) {
+                    urgentList.innerHTML += `
+                        <tr>
+                            <td class="p-3 font-bold">${inv.invoice_number}</td>
+                            <td class="p-3">${custName}</td>
+                            <td class="p-3">${repName}</td>
+                            <td class="p-3">${inv.invoice_date}</td>
+                            <td class="p-3 font-bold">${inv.amount} ر.س</td>
+                            <td class="p-3">${statusBadge}</td>
+                            <td class="p-3 no-print">${waBtn}</td>
+                        </tr>
+                    `;
+                }
+            });
+        }
+
+        // إحصائيات لوحة التحكم
+        function renderDashboardStats() {
+            let totalInvoices = invoicesData.length;
+            let validComm = 0;
+            let lostComm = 0;
+            let warningCount = 0;
+
+            invoicesData.forEach(inv => {
+                const { daysLeft } = calculateDaysInfo(inv.invoice_date);
+                const comm = inv.amount * (inv.commission_rate / 100);
+
+                if(daysLeft < 0) {
+                    lostComm += comm;
+                } else {
+                    validComm += comm;
+                    if(daysLeft <= 10) warningCount++;
+                }
+            });
+
+            document.getElementById('stat-total-invoices').innerText = totalInvoices;
+            document.getElementById('stat-valid-commissions').innerText = validComm.toFixed(2) + ' ر.س';
+            document.getElementById('stat-lost-commissions').innerText = lostComm.toFixed(2) + ' ر.س';
+            document.getElementById('stat-warning-invoices').innerText = warningCount;
+        }
+
+        // تعبئة القوائم المنسدلة
+        function renderDropdowns() {
+            const custSelect = document.getElementById('inv-customer');
+            const repSelect = document.getElementById('cust-rep');
+            const regSelect = document.getElementById('rep-region');
+            const regionsList = document.getElementById('regions-list');
+
+            custSelect.innerHTML = '<option value="">اختر العميل...</option>';
+            customersData.forEach(c => custSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+
+            repSelect.innerHTML = '<option value="">اختر المندوب...</option>';
+            repsData.forEach(r => repSelect.innerHTML += `<option value="${r.id}">${r.name} (${r.regions?.name || ''})</option>`);
+
+            regSelect.innerHTML = '<option value="">اختر المنطقة...</option>';
+            regionsList.innerHTML = '';
+            regionsData.forEach(rg => {
+                regSelect.innerHTML += `<option value="${rg.id}">${rg.name}</option>`;
+                regionsList.innerHTML += `<li class="py-1">${rg.name}</li>`;
+            });
+        }
+
+        // إضافة فاتورة جديدة
+        async function handleAddInvoice(e) {
+            e.preventDefault();
+            const invNum = document.getElementById('inv-num').value;
+            const custId = document.getElementById('inv-customer').value;
+            const amount = document.getElementById('inv-amount').value;
+            const commRate = document.getElementById('inv-comm-rate').value;
+            const invDate = document.getElementById('inv-date').value;
+
+            const { error } = await supabase.from('invoices').insert([{
+                invoice_number: invNum,
+                customer_id: custId,
+                amount: parseFloat(amount),
+                commission_rate: parseFloat(commRate),
+                invoice_date: invDate
+            }]);
+
+            if(!error) {
+                alert('تم حفظ الفاتورة بنجاح!');
+                document.getElementById('add-invoice-form').reset();
+                await loadAllData();
+            } else {
+                alert('خطأ أثناء الحفظ: ' + error.message);
+            }
+        }
+
+        // إضافة عميل ومندوب ومنطقة
+        async function handleAddCustomer(e) {
+            e.preventDefault();
+            const name = document.getElementById('cust-name').value;
+            const phone = document.getElementById('cust-phone').value;
+            const repId = document.getElementById('cust-rep').value;
+
+            const { error } = await supabase.from('customers').insert([{ name, phone, rep_id: repId }]);
+            if(!error) { alert('تم إدخال العميل بنجاح'); await loadAllData(); }
+        }
+
+        async function handleAddRep(e) {
+            e.preventDefault();
+            const name = document.getElementById('rep-name').value;
+            const phone = document.getElementById('rep-phone').value;
+            const regionId = document.getElementById('rep-region').value;
+
+            const { error } = await supabase.from('sales_reps').insert([{ name, phone, region_id: regionId }]);
+            if(!error) { alert('تم إدخال المندوب بنجاح'); await loadAllData(); }
+        }
+
+        async function handleAddRegion(e) {
+            e.preventDefault();
+            const name = document.getElementById('region-name').value;
+            const { error } = await supabase.from('regions').insert([{ name }]);
+            if(!error) { alert('تم إضافة المنطقة'); await loadAllData(); }
+        }
+
+        // حفظ الإعدادات
+        async function saveSettings() {
+            const days = document.getElementById('setting-grace-days').value;
+            const template = document.getElementById('setting-wa-template').value;
+
+            const { error } = await supabase.from('settings').upsert({ id: 1, grace_period_days: days, whatsapp_template: template });
+            if(!error) { alert('تم حفظ الإعدادات العامة!'); await loadAllData(); }
+        }
+
+        // عرض بطاقات العملاء
+        function renderCustomers() {
+            const container = document.getElementById('customers-list-container');
+            container.innerHTML = '';
+            customersData.forEach(c => {
+                container.innerHTML += `
+                    <div class="bg-slate-50 p-3 rounded border text-sm">
+                        <h4 class="font-bold text-slate-800">${c.name}</h4>
+                        <p class="text-xs text-slate-500">جوال: ${c.phone}</p>
+                        <p class="text-xs text-slate-500">المندوب: ${c.sales_reps?.name || 'غير محدد'}</p>
+                    </div>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
