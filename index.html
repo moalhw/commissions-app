@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة ومتابعة العمولات المتقدم</title>
-    <!-- Tailwind CSS للتصميم العصري -->
+    <title>نظام إدارة العمولات والفواتير المباشر</title>
+    <!-- Tailwind CSS & Supabase JS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Tajawal', sans-serif; }
@@ -15,35 +16,30 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <!-- 1. شاشة تسجيل الدخول المحمية -->
+    <!-- 1. شاشة تسجيل الدخول المربوطة بقاعدة البيانات -->
     <div id="login-modal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md border border-slate-100">
             <div class="text-center mb-6">
-                <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto text-3xl mb-3 shadow-inner">
-                    🔒
+                <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto text-3xl mb-3">
+                    🔐
                 </div>
                 <h2 class="text-2xl font-bold text-slate-800">تسجيل الدخول للنظام</h2>
-                <p class="text-xs text-slate-500 mt-1">أدخل بيانات الحساب للوصول إلى لوحة التحكم</p>
+                <p class="text-xs text-slate-500 mt-1">البيانات تتحقق مباشرة من قاعدة البيانات Supabase</p>
             </div>
             
             <form onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">اسم المستخدم</label>
-                    <input type="text" id="login-user" required placeholder="أدخل اسم المستخدم" class="w-full p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition">
+                    <input type="text" id="login-user" required placeholder="أدخل اسم المستخدم" class="w-full p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">كلمة المرور</label>
-                    <input type="password" id="login-pass" required placeholder="••••••••" class="w-full p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition">
+                    <input type="password" id="login-pass" required placeholder="••••••••" class="w-full p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
-                <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-200">
+                <button type="submit" id="login-btn" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition shadow-lg">
                     دخول إلى النظام
                 </button>
             </form>
-            <div class="mt-4 p-3 bg-slate-50 rounded-xl text-[11px] text-slate-500 text-center border border-slate-100">
-                💡 <b>بيانات التجربة المباشرة:</b><br>
-                المدير: <span class="font-bold text-indigo-600">admin</span> / كلمه السر: <span class="font-bold text-indigo-600">123456</span><br>
-                المندوب: <span class="font-bold text-indigo-600">rep1</span> / كلمه السر: <span class="font-bold text-indigo-600">123456</span>
-            </div>
         </div>
     </div>
 
@@ -53,15 +49,15 @@
             <div class="flex items-center gap-3">
                 <span class="text-2xl">📈</span>
                 <div>
-                    <h1 class="text-base font-extrabold leading-none">نظام العمولات والفواتير</h1>
-                    <p class="text-[10px] text-slate-400 mt-1">إدارة التحصيل والمناطق الجغرافية</p>
+                    <h1 class="text-base font-extrabold leading-none">نظام العمولات المباشر</h1>
+                    <p class="text-[10px] text-slate-400 mt-1">مرتبط بقاعدة البيانات الحقيقية</p>
                 </div>
             </div>
             
             <div class="flex items-center gap-3">
                 <div class="text-left bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700">
-                    <p id="user-display-name" class="text-xs font-bold text-indigo-300">اسم المستخدم</p>
-                    <p id="user-display-regions" class="text-[10px] text-slate-400">المناطق المسموحة: -</p>
+                    <p id="user-display-name" class="text-xs font-bold text-indigo-300">غير مسجل</p>
+                    <p id="user-display-regions" class="text-[10px] text-slate-400">المناطق: الكل</p>
                 </div>
                 <button onclick="logout()" class="text-xs bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/20 px-3 py-2 rounded-xl font-bold transition">
                     خروج
@@ -69,361 +65,191 @@
             </div>
         </div>
 
-        <!-- شريط التبويبات -->
         <div class="bg-slate-950/60 px-4 flex gap-2 text-xs font-bold border-t border-slate-800/80 overflow-x-auto">
-            <button id="nav-dashboard" onclick="switchTab('dashboard')" class="tab-btn px-4 py-3 text-indigo-400 border-b-2 border-indigo-500 flex items-center gap-1.5">
-                📊 لوحة التحكم
-            </button>
-            <button id="nav-invoices" onclick="switchTab('invoices')" class="tab-btn px-4 py-3 text-slate-400 hover:text-white flex items-center gap-1.5">
-                📄 الفواتير والعمولات
-            </button>
-            <button id="nav-customers" onclick="switchTab('customers')" class="tab-btn px-4 py-3 text-slate-400 hover:text-white flex items-center gap-1.5">
-                👥 العملاء والمندوبين
-            </button>
-            <button id="nav-users" onclick="switchTab('users')" class="tab-btn px-4 py-3 text-slate-400 hover:text-white flex items-center gap-1.5">
-                🔐 المستخدمين والصلاحيات
-            </button>
-            <button id="nav-settings" onclick="switchTab('settings')" class="tab-btn px-4 py-3 text-slate-400 hover:text-white flex items-center gap-1.5">
-                ⚙️ إعدادات النظام
-            </button>
+            <button id="nav-dashboard" onclick="switchTab('dashboard')" class="tab-btn px-4 py-3 text-indigo-400 border-b-2 border-indigo-500">📊 لوحة التحكم</button>
+            <button id="nav-invoices" onclick="switchTab('invoices')" class="tab-btn px-4 py-3 text-slate-400 hover:text-white">📄 الفواتير والعمولات</button>
+            <button id="nav-customers" onclick="switchTab('customers')" class="tab-btn px-4 py-3 text-slate-400 hover:text-white">👥 العملاء والمندوبين</button>
+            <button id="nav-users" onclick="switchTab('users')" class="tab-btn px-4 py-3 text-slate-400 hover:text-white">🔐 المستخدمين والصلاحيات</button>
+            <button id="nav-settings" onclick="switchTab('settings')" class="tab-btn px-4 py-3 text-slate-400 hover:text-white">⚙️ الإعدادات والمناطق</button>
         </div>
     </header>
 
-    <!-- 3. محتوى الصفحة الرئيسي -->
+    <!-- 3. المحتوى الرئيسي -->
     <main class="container mx-auto px-4 py-6 flex-1">
 
-        <!-- A. لوحة التحكم والإحصائيات -->
+        <!-- لوحة التحكم -->
         <section id="tab-dashboard" class="tab-content space-y-6">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">إجمالي الفواتير النطاق</span>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <span class="text-xs font-bold text-slate-400">إجمالي الفواتير</span>
                     <h3 id="stat-total-count" class="text-3xl font-extrabold text-slate-800 mt-2">0</h3>
                 </div>
                 <div class="bg-emerald-50/60 p-5 rounded-2xl shadow-sm border border-emerald-100">
-                    <span class="text-xs font-bold text-emerald-600 uppercase tracking-wider">عمولات مستحقة سارية</span>
+                    <span class="text-xs font-bold text-emerald-600">عمولات مستحقة سارية</span>
                     <h3 id="stat-valid-comm" class="text-3xl font-extrabold text-emerald-700 mt-2">0</h3>
                 </div>
                 <div class="bg-rose-50/60 p-5 rounded-2xl shadow-sm border border-rose-100">
-                    <span class="text-xs font-bold text-rose-600 uppercase tracking-wider">عمولات ملغاة (تجاوزت المهلة)</span>
+                    <span class="text-xs font-bold text-rose-600">عمولات ملغاة</span>
                     <h3 id="stat-lost-comm" class="text-3xl font-extrabold text-rose-700 mt-2">0</h3>
                 </div>
                 <div class="bg-amber-50/60 p-5 rounded-2xl shadow-sm border border-amber-100">
-                    <span class="text-xs font-bold text-amber-600 uppercase tracking-wider">فواتير اقتربت من الخطر</span>
+                    <span class="text-xs font-bold text-amber-600">فواتير حرجة</span>
                     <h3 id="stat-warn-count" class="text-3xl font-extrabold text-amber-700 mt-2">0</h3>
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-                        <span class="text-amber-500">⚠️</span> فواتير تتطلب التحصيل والتذكير السريع للمناطق المسموحة
-                    </h3>
-                    <button onclick="window.print()" class="no-print bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3 py-1.5 rounded-lg font-bold transition">
-                        🖨️ طباعة
-                    </button>
-                </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                <h3 class="text-sm font-bold text-slate-800 mb-4">⚠️ فواتير عاجلة تتطلب المتابعة</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-right text-xs">
-                        <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
+                        <thead class="bg-slate-50 text-slate-500 font-bold border-b">
                             <tr>
                                 <th class="p-3">رقم الفاتورة</th>
                                 <th class="p-3">العميل</th>
-                                <th class="p-3">المنطقة</th>
-                                <th class="p-3">المندوب</th>
-                                <th class="p-3">التاريخ</th>
                                 <th class="p-3">المبلغ الصافي</th>
                                 <th class="p-3">الحالة والمهلة</th>
-                                <th class="p-3">تواصل</th>
                             </tr>
                         </thead>
-                        <tbody id="urgent-invoices-body" class="divide-y divide-slate-100 font-medium"></tbody>
+                        <tbody id="urgent-invoices-body" class="divide-y divide-slate-100"></tbody>
                     </table>
                 </div>
             </div>
         </section>
 
-        <!-- B. إدارة الفواتير والعمولات -->
+        <!-- الفواتير -->
         <section id="tab-invoices" class="tab-content hidden space-y-6">
-            <!-- نموذج إدخال فاتورة (يظهر حسب الصلاحية) -->
-            <div id="section-add-invoice" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
+            <div id="section-add-invoice" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
                 <h3 class="text-sm font-bold mb-4 text-slate-800">إدخال فاتورة جديدة</h3>
                 <form onsubmit="handleAddInvoice(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
-                    <div>
-                        <label class="block font-bold text-slate-600 mb-1">رقم الفاتورة</label>
-                        <input type="text" id="inv-num" required placeholder="مثال: INV-100" class="w-full p-2.5 border border-slate-200 rounded-xl">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-600 mb-1">العميل</label>
-                        <select id="inv-cust" required class="w-full p-2.5 border border-slate-200 rounded-xl bg-white"></select>
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-600 mb-1">المبلغ الصافي</label>
-                        <input type="number" step="0.01" id="inv-amount" required placeholder="0.00" class="w-full p-2.5 border border-slate-200 rounded-xl">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-600 mb-1">تاريخ الفاتورة</label>
-                        <input type="date" id="inv-date" required class="w-full p-2.5 border border-slate-200 rounded-xl">
-                    </div>
-                    <div class="flex items-end">
-                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl shadow-md transition">
-                            حفظ الفاتورة
-                        </button>
-                    </div>
+                    <input type="text" id="inv-num" required placeholder="رقم الفاتورة" class="p-2.5 border rounded-xl">
+                    <select id="inv-cust" required class="p-2.5 border rounded-xl bg-white"></select>
+                    <input type="number" step="0.01" id="inv-amount" required placeholder="المبلغ الصافي" class="p-2.5 border rounded-xl">
+                    <input type="date" id="inv-date" required class="p-2.5 border rounded-xl">
+                    <button type="submit" class="bg-indigo-600 text-white font-bold py-2.5 rounded-xl hover:bg-indigo-700">حفظ الفاتورة</button>
                 </form>
             </div>
 
-            <!-- جدول الفواتير الكلي -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
-                <h3 class="text-sm font-bold mb-4 text-slate-800">سجل الفواتير الكلي المسموح بها</h3>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                <h3 class="text-sm font-bold mb-4 text-slate-800">سجل الفواتير الكلي من قاعدة البيانات</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-right text-xs">
-                        <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
+                        <thead class="bg-slate-50 text-slate-500 font-bold border-b">
                             <tr>
                                 <th class="p-3">رقم الفاتورة</th>
                                 <th class="p-3">العميل</th>
-                                <th class="p-3">المنطقة</th>
-                                <th class="p-3">المندوب</th>
                                 <th class="p-3">التاريخ</th>
                                 <th class="p-3">المبلغ الصافي</th>
-                                <th class="p-3">العمولة المقدرة</th>
-                                <th class="p-3">الأيام المتبقية/المتأخرة</th>
-                                <th class="p-3">حالة العمولة</th>
-                                <th class="p-3">إجراءات</th>
+                                <th class="p-3">العمولة</th>
+                                <th class="p-3">الحالة</th>
                             </tr>
                         </thead>
-                        <tbody id="all-invoices-body" class="divide-y divide-slate-100 font-medium"></tbody>
+                        <tbody id="all-invoices-body" class="divide-y divide-slate-100"></tbody>
                     </table>
                 </div>
             </div>
         </section>
 
-        <!-- C. إدارة العملاء والمندوبين -->
+        <!-- العملاء والمندوبين -->
         <section id="tab-customers" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- إضافة مندوب -->
-                <div id="section-add-rep" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
-                    <h4 class="font-bold text-sm mb-3 text-slate-800">إضافة مندوب مبيعات جديد</h4>
+                <div id="section-add-rep" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <h4 class="font-bold text-sm mb-3">إضافة مندوب جديد</h4>
                     <form onsubmit="handleAddRep(event)" class="space-y-3 text-xs">
-                        <input type="text" id="rep-name" placeholder="اسم المندوب" required class="w-full p-2.5 border border-slate-200 rounded-xl">
-                        <input type="tel" id="rep-phone" placeholder="رقم الجوال (مثال: 966500000000)" required class="w-full p-2.5 border border-slate-200 rounded-xl">
-                        <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-xl transition">
-                            حفظ المندوب
-                        </button>
+                        <input type="text" id="rep-name" placeholder="اسم المندوب" required class="w-full p-2.5 border rounded-xl">
+                        <input type="tel" id="rep-phone" placeholder="رقم الجوال" required class="w-full p-2.5 border rounded-xl">
+                        <button type="submit" class="w-full bg-slate-800 text-white font-bold py-2.5 rounded-xl">حفظ المندوب</button>
                     </form>
                 </div>
 
-                <!-- إضافة عميل -->
-                <div id="section-add-cust" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
-                    <h4 class="font-bold text-sm mb-3 text-slate-800">إضافة عميل جديد ورِبطه بمنطقة ومندوب</h4>
+                <div id="section-add-cust" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <h4 class="font-bold text-sm mb-3">إضافة عميل جديد</h4>
                     <form onsubmit="handleAddCustomer(event)" class="space-y-3 text-xs">
-                        <input type="text" id="cust-name" placeholder="اسم العميل أو التجارة" required class="w-full p-2.5 border border-slate-200 rounded-xl">
-                        <input type="tel" id="cust-phone" placeholder="رقم الواتساب (مثال: 966500000000)" required class="w-full p-2.5 border border-slate-200 rounded-xl">
+                        <input type="text" id="cust-name" placeholder="اسم العميل" required class="w-full p-2.5 border rounded-xl">
+                        <input type="tel" id="cust-phone" placeholder="رقم الواتساب" required class="w-full p-2.5 border rounded-xl">
                         <div class="grid grid-cols-2 gap-2">
-                            <select id="cust-region" required class="w-full p-2.5 border border-slate-200 rounded-xl bg-white"></select>
-                            <select id="cust-rep" required class="w-full p-2.5 border border-slate-200 rounded-xl bg-white"></select>
+                            <select id="cust-region" required class="w-full p-2.5 border rounded-xl bg-white"></select>
+                            <select id="cust-rep" required class="w-full p-2.5 border rounded-xl bg-white"></select>
                         </div>
-                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl transition">
-                            حفظ العميل
-                        </button>
+                        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-xl">حفظ العميل</button>
                     </form>
                 </div>
             </div>
 
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
-                <h4 class="font-bold text-sm mb-4 text-slate-800">دليل العملاء في المناطق المسموحة لك</h4>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <h4 class="font-bold text-sm mb-4">دليل العملاء</h4>
                 <div id="customers-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs"></div>
             </div>
         </section>
 
-        <!-- D. نظام إدارة المستخدمين والصلاحيات المشدد -->
+        <!-- المستخدمين والصلاحيات -->
         <section id="tab-users" class="tab-content hidden space-y-6">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- نموذج إضافة/تعديل مستخدم -->
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 lg:col-span-1">
-                    <h3 class="text-sm font-bold text-slate-800 mb-4">إضافة مستخدم وتحديد صلاحياته والمناطق</h3>
-                    <form onsubmit="handleSaveUser(event)" class="space-y-3 text-xs">
-                        <div>
-                            <label class="block font-bold text-slate-600 mb-1">اسم المستخدم (للتسجيل)</label>
-                            <input type="text" id="usr-name" required placeholder="مثال: rep_ahmed" class="w-full p-2.5 border border-slate-200 rounded-xl">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-600 mb-1">كلمة المرور</label>
-                            <input type="password" id="usr-pass" required placeholder="••••••••" class="w-full p-2.5 border border-slate-200 rounded-xl">
-                        </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-bold mb-4">إضافة مستخدم جديد لقاعدة البيانات</h3>
+                <form onsubmit="handleSaveUser(event)" class="space-y-3 text-xs max-w-xl">
+                    <input type="text" id="usr-name" placeholder="اسم المستخدم" required class="w-full p-2.5 border rounded-xl">
+                    <input type="password" id="usr-pass" placeholder="كلمة المرور" required class="w-full p-2.5 border rounded-xl">
+                    
+                    <label class="block font-bold">المناطق المسموح بها:</label>
+                    <div id="usr-regions-checklist" class="space-y-1 bg-slate-50 p-2.5 rounded-xl border max-h-32 overflow-y-auto"></div>
 
-                        <!-- تحديد المناطق المسموحة -->
-                        <div>
-                            <label class="block font-bold text-slate-600 mb-1">المناطق المسموح له بها (تحديد متعدد)</label>
-                            <div id="usr-regions-checklist" class="space-y-1 bg-slate-50 p-2.5 rounded-xl border border-slate-200 max-h-32 overflow-y-auto">
-                                <!-- يتم التحميل هنا -->
-                            </div>
-                        </div>
-
-                        <!-- الصلاحيات الدقيقة -->
-                        <div class="space-y-2 pt-2 border-t border-slate-100">
-                            <label class="block font-bold text-slate-700 mb-1">جدول الصلاحيات الممنوحة:</label>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="perm-add-inv" class="rounded text-indigo-600">
-                                <span>إضافة وتعديل الفواتير</span>
-                            </label>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="perm-manage-cust" class="rounded text-indigo-600">
-                                <span>إضافة وتعديل العملاء والمندوبين</span>
-                            </label>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="perm-send-wa" class="rounded text-indigo-600">
-                                <span>إرسال رسائل التذكير بالواتساب</span>
-                            </label>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="perm-view-reports" class="rounded text-indigo-600">
-                                <span>مشاهدة لوحة التقارير والتحليلات</span>
-                            </label>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="perm-manage-settings" class="rounded text-indigo-600">
-                                <span>التحكم بالإعدادات والمستخدمين</span>
-                            </label>
-                        </div>
-
-                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl transition shadow-md">
-                            حفظ المستخدم الصلاحيات
-                        </button>
-                    </form>
-                </div>
-
-                <!-- جدول قائمة المستخدمين -->
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 lg:col-span-2">
-                    <h3 class="text-sm font-bold text-slate-800 mb-4">قائمة المستخدمين المسجلين بالمظهر الأمني</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-right text-xs">
-                            <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
-                                <tr>
-                                    <th class="p-3">اسم المستخدم</th>
-                                    <th class="p-3">المناطق المسموحة</th>
-                                    <th class="p-3">الصلاحيات المتاحة</th>
-                                    <th class="p-3">إجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody id="users-table-body" class="divide-y divide-slate-100 font-medium"></tbody>
-                        </table>
-                    </div>
-                </div>
+                    <button type="submit" class="bg-emerald-600 text-white font-bold px-4 py-2.5 rounded-xl">حفظ المستخدم</button>
+                </form>
             </div>
         </section>
 
-        <!-- E. إعدادات النظام الموسعة -->
+        <!-- الإعدادات وإدارة المناطق -->
         <section id="tab-settings" class="tab-content hidden space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- الإعدادات العامة -->
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4 text-xs">
-                    <h3 class="text-sm font-bold text-slate-800">المتغيرات المحاسبية العامة</h3>
-                    
-                    <div>
-                        <label class="block font-bold text-slate-600 mb-1">مهلة استحقاق العمولة (بالأيام)</label>
-                        <input type="number" id="set-grace-days" class="w-full p-2.5 border border-slate-200 rounded-xl font-bold">
-                    </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4 text-xs">
+                <h3 class="text-sm font-bold text-slate-800">إدارة المناطق الجغرافية (إضافة، تعديل، حذف)</h3>
+                
+                <form onsubmit="handleAddRegion(event)" class="flex gap-2">
+                    <input type="text" id="reg-name" placeholder="اسم المنطقة الجديدة" required class="flex-1 p-2.5 border rounded-xl">
+                    <button type="submit" class="bg-slate-800 text-white font-bold px-4 py-2.5 rounded-xl">إضافة منطقة</button>
+                </form>
 
-                    <div>
-                        <label class="block font-bold text-slate-600 mb-1">نسبة العمولة الافتراضية (%)</label>
-                        <input type="number" step="0.1" id="set-comm-rate" class="w-full p-2.5 border border-slate-200 rounded-xl font-bold">
-                    </div>
-
-                    <div>
-                        <label class="block font-bold text-slate-600 mb-1">قالب رسالة التذكير بالواتساب</label>
-                        <textarea id="set-wa-template" rows="3" class="w-full p-2.5 border border-slate-200 rounded-xl"></textarea>
-                        <p class="text-[10px] text-slate-400 mt-1">المتغيرات المتاحة: {customer}, {invoice}, {amount}, {days}</p>
-                    </div>
-
-                    <button onclick="saveGlobalSettings()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2.5 rounded-xl transition">
-                        حفظ الإعدادات العامة
-                    </button>
-                </div>
-
-                <!-- إدارة المناطق الجغرافية -->
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4 text-xs">
-                    <h3 class="text-sm font-bold text-slate-800">إدارة المناطق الجغرافية</h3>
-                    <form onsubmit="handleAddRegion(event)" class="flex gap-2">
-                        <input type="text" id="reg-name" placeholder="اسم المنطقة الجديدة (مثال: الوسطى)" required class="flex-1 p-2.5 border border-slate-200 rounded-xl">
-                        <button type="submit" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-4 py-2.5 rounded-xl transition">إضافة</button>
-                    </form>
-
-                    <div class="border border-slate-100 rounded-xl overflow-hidden">
-                        <ul id="regions-list-group" class="divide-y divide-slate-100"></ul>
-                    </div>
+                <div class="border rounded-xl overflow-hidden">
+                    <table class="w-full text-right text-xs">
+                        <thead class="bg-slate-50 font-bold border-b">
+                            <tr>
+                                <th class="p-3">اسم المنطقة</th>
+                                <th class="p-3 text-left">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="regions-table-body" class="divide-y divide-slate-100"></tbody>
+                    </table>
                 </div>
             </div>
         </section>
 
     </main>
 
-    <!-- 4. المحرك البرمجي والحماية (JavaScript Engine) -->
+    <!-- 4. الربط المباشر بقاعدة بيانات Supabase الخاصة بك -->
     <script>
-        // قواعد البيانات الأولية المحفوظة
+        const SUPABASE_URL = 'https://lyieimsifdynazgwqurn.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5aWVpbXNpZmR5bmF6Z3dxdXJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI5NTcwMDgsImV4cCI6MjA1ODUzMzAwOH0.Yp963S7X-V483J32K2W1bK0pX2o';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         let currentUser = null;
+        let regions = [], reps = [], customers = [], invoices = [];
 
-        let systemSettings = {
-            graceDays: 30,
-            commRate: 5.0,
-            template: "عزيزي {customer}، نود تذكيركم بالفاتورة رقم {invoice} بقيمة {amount} الصافية، المتبقي: {days} يوم."
-        };
-
-        let regions = [
-            { id: 1, name: "المنطقة الشمالية" },
-            { id: 2, name: "المنطقة الجنوبية" },
-            { id: 3, name: "المنطقة الشرقية" }
-        ];
-
-        let reps = [
-            { id: 1, name: "أحمد بن علي", phone: "966500000001" },
-            { id: 2, name: "خالد المحمد", phone: "966500000002" }
-        ];
-
-        let customers = [
-            { id: 1, name: "مؤسسة الأمل للتجارة", phone: "966500000010", regionId: 1, repId: 1 },
-            { id: 2, name: "شركة المجد العالمية", phone: "966500000020", regionId: 2, repId: 2 }
-        ];
-
-        let invoices = [
-            { id: 101, num: "INV-1001", custId: 1, amount: 8500, date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
-            { id: 102, num: "INV-1002", custId: 2, amount: 14200, date: new Date(Date.now() - 36 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] }
-        ];
-
-        // قائمة المستخدمين وحساب الحماية
-        let users = [
-            {
-                id: 1,
-                username: "admin",
-                pass: "123456",
-                allowedRegions: [1, 2, 3], // كافة المناطق
-                perms: { addInv: true, manageCust: true, sendWa: true, viewReports: true, manageSettings: true }
-            },
-            {
-                id: 2,
-                username: "rep1",
-                pass: "123456",
-                allowedRegions: [1], // المنطقة الشمالية فقط
-                perms: { addInv: true, manageCust: false, sendWa: true, viewReports: true, manageSettings: false }
-            }
-        ];
-
-        // تسجيل الدخول والحماية
-        function handleLogin(e) {
+        // تسجيل الدخول بالتحقق من جدول app_users
+        async function handleLogin(e) {
             e.preventDefault();
             const uInput = document.getElementById('login-user').value.trim();
             const pInput = document.getElementById('login-pass').value.trim();
 
-            const found = users.find(u => u.username === uInput && u.pass === pInput);
+            const { data, error } = await _supabase
+                .from('app_users')
+                .select('*')
+                .eq('username', uInput)
+                .eq('password', pInput)
+                .single();
 
-            if (found) {
-                currentUser = found;
+            if (data) {
+                currentUser = data;
                 document.getElementById('login-modal').classList.add('hidden');
-                
-                // تحديث بيانات الترويسة
                 document.getElementById('user-display-name').innerText = currentUser.username;
-                const regNames = currentUser.allowedRegions.map(id => (regions.find(r => r.id === id) || {}).name).filter(Boolean).join(', ');
-                document.getElementById('user-display-regions').innerText = `المناطق: ${regNames || 'الكل'}`;
-
-                applyPermissionsUI();
-                renderAll();
+                await loadAllDataFromSupabase();
             } else {
                 alert('اسم المستخدم أو كلمة المرور غير صحيحة!');
             }
@@ -434,63 +260,66 @@
             document.getElementById('login-modal').classList.remove('hidden');
         }
 
-        // تطبيق الصلاحيات على الواجهة
-        function applyPermissionsUI() {
-            const p = currentUser.perms;
+        // جلب البيانات الفعلية المخزنة فقط
+        async function loadAllDataFromSupabase() {
+            const { data: regData } = await _supabase.from('regions').select('*');
+            regions = regData || [];
 
-            // إخفاء/إظهار النماذج والتبويبات حسب الصلاحية
-            toggleEl('section-add-invoice', p.addInv);
-            toggleEl('section-add-rep', p.manageCust);
-            toggleEl('section-add-cust', p.manageCust);
-            toggleEl('nav-users', p.manageSettings);
-            toggleEl('nav-settings', p.manageSettings);
-            toggleEl('nav-dashboard', p.viewReports);
+            const { data: repData } = await _supabase.from('reps').select('*');
+            reps = repData || [];
+
+            const { data: custData } = await _supabase.from('customers').select('*');
+            customers = custData || [];
+
+            const { data: invData } = await _supabase.from('invoices').select('*');
+            invoices = invData || [];
+
+            renderAll();
         }
 
-        function toggleEl(id, show) {
-            const el = document.getElementById(id);
-            if (el) {
-                if (show) el.classList.remove('hidden');
-                else el.classList.add('hidden');
-            }
-        }
-
-        // التبديل بين الشاشات
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('text-indigo-400', 'border-b-2', 'border-indigo-500');
-                btn.classList.add('text-slate-400');
-            });
-            document.getElementById(`nav-${tabId}`).classList.add('text-indigo-400', 'border-b-2', 'border-indigo-500');
-        }
-
-        // حساب المهلة والأيام
-        function getDaysInfo(dateStr) {
-            const diffDays = Math.floor((new Date() - new Date(dateStr)) / (1000 * 60 * 60 * 24));
-            const remainingDays = systemSettings.graceDays - diffDays;
-            return { diffDays, remainingDays };
-        }
-
-        // تصفية البيانات المسموحة للمستخدم حسب مناطقه
-        function getFilteredCustomers() {
-            return customers.filter(c => currentUser.allowedRegions.includes(c.regionId));
-        }
-
-        function getFilteredInvoices() {
-            const allowedCustIds = getFilteredCustomers().map(c => c.id);
-            return invoices.filter(inv => allowedCustIds.includes(inv.custId));
-        }
-
-        // العرض الشامل
         function renderAll() {
+            renderRegionsTable();
             renderDropdowns();
             renderInvoices();
             renderCustomers();
-            renderUsers();
-            renderSettings();
+        }
+
+        // إدارة المناطق في قاعدة البيانات
+        function renderRegionsTable() {
+            const body = document.getElementById('regions-table-body');
+            if(!body) return;
+            body.innerHTML = regions.map(r => `
+                <tr>
+                    <td class="p-3 font-bold">${r.name}</td>
+                    <td class="p-3 text-left space-x-2 space-x-reverse">
+                        <button onclick="editRegion(${r.id}, '${r.name}')" class="text-indigo-600 font-bold hover:underline">تعديل</button>
+                        <button onclick="deleteRegion(${r.id})" class="text-rose-600 font-bold hover:underline">حذف</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function handleAddRegion(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value.trim();
+            await _supabase.from('regions').insert([{ name }]);
+            document.getElementById('reg-name').value = '';
+            await loadAllDataFromSupabase();
+        }
+
+        async function editRegion(id, currentName) {
+            const newName = prompt("أدخل الاسم الجديد للمنطقة:", currentName);
+            if (newName && newName.trim() !== "") {
+                await _supabase.from('regions').update({ name: newName.trim() }).eq('id', id);
+                await loadAllDataFromSupabase();
+            }
+        }
+
+        async function deleteRegion(id) {
+            if (confirm("هل أنت تأكد من حذف هذه المنطقة؟")) {
+                await _supabase.from('regions').delete().eq('id', id);
+                await loadAllDataFromSupabase();
+            }
         }
 
         function renderDropdowns() {
@@ -499,232 +328,56 @@
             const repSelect = document.getElementById('cust-rep');
             const usrRegsList = document.getElementById('usr-regions-checklist');
 
-            const filteredCusts = getFilteredCustomers();
-            custSelect.innerHTML = filteredCusts.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            if(custSelect) custSelect.innerHTML = customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            if(regSelect) regSelect.innerHTML = regions.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            if(repSelect) repSelect.innerHTML = reps.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
 
-            regSelect.innerHTML = regions.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-            repSelect.innerHTML = reps.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-
-            usrRegsList.innerHTML = regions.map(r => `
-                <label class="flex items-center gap-2 text-xs">
-                    <input type="checkbox" value="${r.id}" class="usr-reg-cb rounded text-indigo-600">
-                    <span>${r.name}</span>
-                </label>
-            `).join('');
+            if(usrRegsList) {
+                usrRegsList.innerHTML = regions.map(r => `
+                    <label class="flex items-center gap-2 text-xs">
+                        <input type="checkbox" value="${r.id}" class="usr-reg-cb rounded text-indigo-600">
+                        <span>${r.name}</span>
+                    </label>
+                `).join('');
+            }
         }
 
         function renderInvoices() {
-            const urgentBody = document.getElementById('urgent-invoices-body');
             const allBody = document.getElementById('all-invoices-body');
+            const countElem = document.getElementById('stat-total-count');
+            if(countElem) countElem.innerText = invoices.length;
 
-            urgentBody.innerHTML = '';
-            allBody.innerHTML = '';
-
-            let totalCount = 0, validCommSum = 0, lostCommSum = 0, warnCount = 0;
-
-            const visibleInvoices = getFilteredInvoices();
-
-            visibleInvoices.forEach(inv => {
-                totalCount++;
-                const cust = customers.find(c => c.id == inv.custId) || {};
-                const reg = regions.find(r => r.id == cust.regionId) || {};
-                const rep = reps.find(r => r.id == cust.repId) || {};
-
-                const { remainingDays } = getDaysInfo(inv.date);
-                const commVal = inv.amount * (systemSettings.commRate / 100);
-
-                let badge = '';
-                if (remainingDays < 0) {
-                    lostCommSum += commVal;
-                    badge = `<span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full text-[10px] font-bold">ملغاة (متأخرة ${Math.abs(remainingDays)} يوم)</span>`;
-                } else if (remainingDays <= 10) {
-                    validCommSum += commVal;
-                    warnCount++;
-                    badge = `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-[10px] font-bold">تحذير (باقي ${remainingDays} يوم)</span>`;
-                } else {
-                    validCommSum += commVal;
-                    badge = `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-[10px] font-bold">سليمة (باقي ${remainingDays} يوم)</span>`;
-                }
-
-                // زر الواتساب المباشر المخصص (يظهر فقط إذا كان للمستخدم صلاحية)
-                let waBtn = '-';
-                if (currentUser.perms.sendWa) {
-                    const msg = encodeURIComponent(
-                        systemSettings.template.replace('{customer}', cust.name || '')
-                                               .replace('{invoice}', inv.num)
-                                               .replace('{amount}', inv.amount.toLocaleString())
-                                               .replace('{days}', remainingDays > 0 ? remainingDays : `متأخرة ${Math.abs(remainingDays)}`)
-                    );
-                    waBtn = `<a href="https://wa.me/${cust.phone}?text=${msg}" target="_blank" class="bg-emerald-500 hover:bg-emerald-600 text-white px-2 py-1 rounded-lg font-bold text-[11px]">📱 تواصل</a>`;
-                }
-
-                const row = `
+            if(!allBody) return;
+            allBody.innerHTML = invoices.map(inv => {
+                const cust = customers.find(c => c.id == inv.customer_id) || {};
+                return `
                     <tr>
-                        <td class="p-3 font-bold">${inv.num}</td>
+                        <td class="p-3 font-bold">${inv.invoice_number || inv.id}</td>
                         <td class="p-3">${cust.name || '-'}</td>
-                        <td class="p-3"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded">${reg.name || '-'}</span></td>
-                        <td class="p-3">${rep.name || '-'}</td>
-                        <td class="p-3">${inv.date}</td>
-                        <td class="p-3 font-extrabold text-slate-900">${inv.amount.toLocaleString()}</td>
-                        <td class="p-3 text-emerald-600 font-bold">${commVal.toLocaleString()}</td>
-                        <td class="p-3 font-bold">${remainingDays}</td>
-                        <td class="p-3">${badge}</td>
-                        <td class="p-3">${waBtn}</td>
+                        <td class="p-3">${inv.invoice_date || '-'}</td>
+                        <td class="p-3 font-extrabold">${Number(inv.amount || 0).toLocaleString()}</td>
+                        <td class="p-3 text-emerald-600 font-bold">${(Number(inv.amount || 0) * 0.05).toLocaleString()}</td>
+                        <td class="p-3"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px]">مسجلة</span></td>
                     </tr>
                 `;
-
-                allBody.innerHTML += row;
-                if (remainingDays <= 10) urgentBody.innerHTML += row;
-            });
-
-            document.getElementById('stat-total-count').innerText = totalCount;
-            document.getElementById('stat-valid-comm').innerText = validCommSum.toLocaleString();
-            document.getElementById('stat-lost-comm').innerText = lostCommSum.toLocaleString();
-            document.getElementById('stat-warn-count').innerText = warnCount;
+            }).join('');
         }
 
         function renderCustomers() {
             const grid = document.getElementById('customers-grid');
-            const visibleCusts = getFilteredCustomers();
-
-            grid.innerHTML = visibleCusts.map(c => {
-                const reg = regions.find(r => r.id == c.regionId) || {};
-                const rep = reps.find(r => r.id == c.repId) || {};
-                return `
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80">
-                        <div class="flex justify-between items-start">
-                            <p class="font-bold text-slate-800">${c.name}</p>
-                            <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold">${reg.name || '-'}</span>
-                        </div>
-                        <p class="text-slate-500 mt-1">الجوال: ${c.phone}</p>
-                        <p class="text-indigo-600 font-medium mt-0.5">المندوب التابع: ${rep.name || '-'}</p>
-                    </div>
-                `;
-            }).join('');
+            if(!grid) return;
+            grid.innerHTML = customers.map(c => `
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <p class="font-bold text-slate-800">${c.name}</p>
+                    <p class="text-slate-500 mt-1">الجوال: ${c.phone || '-'}</p>
+                </div>
+            `).join('');
         }
 
-        // عرض وإدارة المستخدمين
-        function renderUsers() {
-            const body = document.getElementById('users-table-body');
-            body.innerHTML = users.map(u => {
-                const regNames = u.allowedRegions.map(id => (regions.find(r => r.id === id) || {}).name).filter(Boolean).join(', ');
-                const activePerms = [];
-                if (u.perms.addInv) activePerms.push('إدخال فواتير');
-                if (u.perms.manageCust) activePerms.push('إدارة عملاء');
-                if (u.perms.sendWa) activePerms.push('واتساب');
-                if (u.perms.manageSettings) activePerms.push('إعدادات');
-
-                return `
-                    <tr>
-                        <td class="p-3 font-bold text-indigo-700">${u.username}</td>
-                        <td class="p-3">${regNames || 'الكل'}</td>
-                        <td class="p-3"><span class="text-[10px] bg-slate-100 p-1 rounded">${activePerms.join(' | ')}</span></td>
-                        <td class="p-3">
-                            <button onclick="deleteUser(${u.id})" class="text-rose-600 font-bold hover:underline">حذف</button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
         }
-
-        function handleSaveUser(e) {
-            e.preventDefault();
-            const username = document.getElementById('usr-name').value.trim();
-            const pass = document.getElementById('usr-pass').value.trim();
-
-            const selectedRegs = Array.from(document.querySelectorAll('.usr-reg-cb:checked')).map(cb => parseInt(cb.value));
-
-            const newUser = {
-                id: Date.now(),
-                username,
-                pass,
-                allowedRegions: selectedRegs.length > 0 ? selectedRegs : regions.map(r => r.id),
-                perms: {
-                    addInv: document.getElementById('perm-add-inv').checked,
-                    manageCust: document.getElementById('perm-manage-cust').checked,
-                    sendWa: document.getElementById('perm-send-wa').checked,
-                    viewReports: document.getElementById('perm-view-reports').checked,
-                    manageSettings: document.getElementById('perm-manage-settings').checked
-                }
-            };
-
-            users.push(newUser);
-            alert('تم حفظ المستخدم والصلاحيات بنجاح!');
-            renderUsers();
-        }
-
-        function deleteUser(id) {
-            if (id === 1) return alert('لا يمكن حذف حساب المدير الرئيسي!');
-            users = users.filter(u => u.id !== id);
-            renderUsers();
-        }
-
-        // إدارة الإعدادات والمناطق
-        function renderSettings() {
-            document.getElementById('set-grace-days').value = systemSettings.graceDays;
-            document.getElementById('set-comm-rate').value = systemSettings.commRate;
-            document.getElementById('set-wa-template').value = systemSettings.template;
-
-            const list = document.getElementById('regions-list-group');
-            list.innerHTML = regions.map(r => `<li class="p-2.5 font-bold text-slate-700">${r.name}</li>`).join('');
-        }
-
-        function saveGlobalSettings() {
-            systemSettings.graceDays = parseInt(document.getElementById('set-grace-days').value);
-            systemSettings.commRate = parseFloat(document.getElementById('set-comm-rate').value);
-            systemSettings.template = document.getElementById('set-wa-template').value;
-            alert('تم حفظ الإعدادات بنجاح!');
-            renderAll();
-        }
-
-        function handleAddRegion(e) {
-            e.preventDefault();
-            const name = document.getElementById('reg-name').value.trim();
-            regions.push({ id: Date.now(), name });
-            alert('تم إضافة المنطقة الجديدة');
-            renderAll();
-        }
-
-        // الإضافات الفردية
-        function handleAddInvoice(e) {
-            e.preventDefault();
-            invoices.push({
-                id: Date.now(),
-                num: document.getElementById('inv-num').value,
-                custId: parseInt(document.getElementById('inv-cust').value),
-                amount: parseFloat(document.getElementById('inv-amount').value),
-                date: document.getElementById('inv-date').value
-            });
-            alert('تم حفظ الفاتورة');
-            renderAll();
-        }
-
-        function handleAddRep(e) {
-            e.preventDefault();
-            reps.push({
-                id: Date.now(),
-                name: document.getElementById('rep-name').value,
-                phone: document.getElementById('rep-phone').value
-            });
-            alert('تم إضافة المندوب');
-            renderAll();
-        }
-
-        function handleAddCustomer(e) {
-            e.preventDefault();
-            customers.push({
-                id: Date.now(),
-                name: document.getElementById('cust-name').value,
-                phone: document.getElementById('cust-phone').value,
-                regionId: parseInt(document.getElementById('cust-region').value),
-                repId: parseInt(document.getElementById('cust-rep').value)
-            });
-            alert('تم إدخال العميل ورِبطه بالمنطقة والمندوب');
-            renderAll();
-        }
-
-        // تاريخ اليوم الافتراضي
-        document.getElementById('inv-date').valueAsDate = new Date();
     </script>
 </body>
 </html>
