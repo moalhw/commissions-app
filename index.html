@@ -16,7 +16,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <!-- 1. شاشة تسجيل الدخول المربوطة بقاعدة البيانات -->
+    <!-- 1. شاشة تسجيل الدخول -->
     <div id="login-modal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md border border-slate-100">
             <div class="text-center mb-6">
@@ -43,7 +43,7 @@
         </div>
     </div>
 
-    <!-- 2. الهيدر وشريط التنقل الرئيسي -->
+    <!-- 2. الهيدر وشريط التنقل -->
     <header class="bg-slate-900 text-white shadow-xl no-print sticky top-0 z-40">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center flex-wrap gap-3">
             <div class="flex items-center gap-3">
@@ -93,30 +93,13 @@
                     <h3 id="stat-lost-comm" class="text-3xl font-extrabold text-rose-700 mt-2">0</h3>
                 </div>
                 <div class="bg-amber-50/60 p-5 rounded-2xl shadow-sm border border-amber-100">
-                    <span class="text-xs font-bold text-amber-600">فواتير حرجة</span>
-                    <h3 id="stat-warn-count" class="text-3xl font-extrabold text-amber-700 mt-2">0</h3>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-                <h3 class="text-sm font-bold text-slate-800 mb-4">⚠️ فواتير عاجلة تتطلب المتابعة</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-right text-xs">
-                        <thead class="bg-slate-50 text-slate-500 font-bold border-b">
-                            <tr>
-                                <th class="p-3">رقم الفاتورة</th>
-                                <th class="p-3">العميل</th>
-                                <th class="p-3">المبلغ الصافي</th>
-                                <th class="p-3">الحالة والمهلة</th>
-                            </tr>
-                        </thead>
-                        <tbody id="urgent-invoices-body" class="divide-y divide-slate-100"></tbody>
-                    </table>
+                    <span class="text-xs font-bold text-amber-600">مجموع العمولات المتوقعة</span>
+                    <h3 id="stat-total-comm" class="text-3xl font-extrabold text-amber-700 mt-2">0</h3>
                 </div>
             </div>
         </section>
 
-        <!-- الفواتير -->
+        <!-- الفواتير والعمولات -->
         <section id="tab-invoices" class="tab-content hidden space-y-6">
             <div id="section-add-invoice" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
                 <h3 class="text-sm font-bold mb-4 text-slate-800">إدخال فاتورة جديدة</h3>
@@ -139,7 +122,7 @@
                                 <th class="p-3">العميل</th>
                                 <th class="p-3">التاريخ</th>
                                 <th class="p-3">المبلغ الصافي</th>
-                                <th class="p-3">العمولة</th>
+                                <th class="p-3">العمولة (5%)</th>
                                 <th class="p-3">الحالة</th>
                             </tr>
                         </thead>
@@ -156,7 +139,7 @@
                     <h4 class="font-bold text-sm mb-3">إضافة مندوب جديد</h4>
                     <form onsubmit="handleAddRep(event)" class="space-y-3 text-xs">
                         <input type="text" id="rep-name" placeholder="اسم المندوب" required class="w-full p-2.5 border rounded-xl">
-                        <input type="tel" id="rep-phone" placeholder="رقم الجوال" required class="w-full p-2.5 border rounded-xl">
+                        <input type="tel" id="rep-phone" placeholder="رقم الجوال" class="w-full p-2.5 border rounded-xl">
                         <button type="submit" class="w-full bg-slate-800 text-white font-bold py-2.5 rounded-xl">حفظ المندوب</button>
                     </form>
                 </div>
@@ -165,10 +148,10 @@
                     <h4 class="font-bold text-sm mb-3">إضافة عميل جديد</h4>
                     <form onsubmit="handleAddCustomer(event)" class="space-y-3 text-xs">
                         <input type="text" id="cust-name" placeholder="اسم العميل" required class="w-full p-2.5 border rounded-xl">
-                        <input type="tel" id="cust-phone" placeholder="رقم الواتساب" required class="w-full p-2.5 border rounded-xl">
+                        <input type="tel" id="cust-phone" placeholder="رقم الواتساب" class="w-full p-2.5 border rounded-xl">
                         <div class="grid grid-cols-2 gap-2">
-                            <select id="cust-region" required class="w-full p-2.5 border rounded-xl bg-white"></select>
-                            <select id="cust-rep" required class="w-full p-2.5 border rounded-xl bg-white"></select>
+                            <select id="cust-region" class="w-full p-2.5 border rounded-xl bg-white"></select>
+                            <select id="cust-rep" class="w-full p-2.5 border rounded-xl bg-white"></select>
                         </div>
                         <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-xl">حفظ العميل</button>
                     </form>
@@ -176,7 +159,7 @@
             </div>
 
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                <h4 class="font-bold text-sm mb-4">دليل العملاء</h4>
+                <h4 class="font-bold text-sm mb-4">دليل العملاء والمندوبين المباشر</h4>
                 <div id="customers-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs"></div>
             </div>
         </section>
@@ -188,19 +171,15 @@
                 <form onsubmit="handleSaveUser(event)" class="space-y-3 text-xs max-w-xl">
                     <input type="text" id="usr-name" placeholder="اسم المستخدم" required class="w-full p-2.5 border rounded-xl">
                     <input type="password" id="usr-pass" placeholder="كلمة المرور" required class="w-full p-2.5 border rounded-xl">
-                    
-                    <label class="block font-bold">المناطق المسموح بها:</label>
-                    <div id="usr-regions-checklist" class="space-y-1 bg-slate-50 p-2.5 rounded-xl border max-h-32 overflow-y-auto"></div>
-
                     <button type="submit" class="bg-emerald-600 text-white font-bold px-4 py-2.5 rounded-xl">حفظ المستخدم</button>
                 </form>
             </div>
         </section>
 
-        <!-- الإعدادات وإدارة المناطق -->
+        <!-- الإعدادات والمناطق -->
         <section id="tab-settings" class="tab-content hidden space-y-6">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4 text-xs">
-                <h3 class="text-sm font-bold text-slate-800">إدارة المناطق الجغرافية (إضافة، تعديل، حذف)</h3>
+                <h3 class="text-sm font-bold text-slate-800">إدارة المناطق الجغرافية</h3>
                 
                 <form onsubmit="handleAddRegion(event)" class="flex gap-2">
                     <input type="text" id="reg-name" placeholder="اسم المنطقة الجديدة" required class="flex-1 p-2.5 border rounded-xl">
@@ -223,8 +202,9 @@
 
     </main>
 
-    <!-- 4. الربط المباشر بقاعدة بيانات Supabase الخاصة بك -->
+    <!-- 4. جافا سكريبت الكامل للاتصال والعمليات -->
     <script>
+        // إعدادات الربط الصحيحة بالكامل
         const SUPABASE_URL = 'https://lyieimsifdynazgwqurn.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5aWVpbXNpZmR5bmF6Z3dxdXJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwODA2OTQsImV4cCI6MjEwMDY1NjY5NH0.sGiTYhUHwsZcYiLyB2enkvB01kJwaTZJ8YyHQD3HPEk';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -232,26 +212,32 @@
         let currentUser = null;
         let regions = [], reps = [], customers = [], invoices = [];
 
-        // تسجيل الدخول بالتحقق من جدول app_users
+        // 1. عملية تسجيل الدخول
         async function handleLogin(e) {
-            e.preventDefault();
+            if (e) e.preventDefault();
             const uInput = document.getElementById('login-user').value.trim();
             const pInput = document.getElementById('login-pass').value.trim();
 
-            const { data, error } = await _supabase
-                .from('app_users')
-                .select('*')
-                .eq('username', uInput)
-                .eq('password', pInput)
-                .single();
+            try {
+                const { data, error } = await _supabase
+                    .from('app_users')
+                    .select('*')
+                    .eq('username', uInput)
+                    .eq('password', pInput)
+                    .single();
 
-            if (data) {
-                currentUser = data;
-                document.getElementById('login-modal').classList.add('hidden');
-                document.getElementById('user-display-name').innerText = currentUser.username;
-                await loadAllDataFromSupabase();
-            } else {
-                alert('اسم المستخدم أو كلمة المرور غير صحيحة!');
+                if (error || !data) {
+                    alert('اسم المستخدم أو كلمة المرور غير صحيحة، أو لم يتم إعطاء التصاريح لجدول app_users.');
+                    console.error("Login Error:", error);
+                } else {
+                    currentUser = data;
+                    document.getElementById('login-modal').classList.add('hidden');
+                    document.getElementById('user-display-name').innerText = currentUser.username;
+                    await loadAllDataFromSupabase();
+                }
+            } catch (err) {
+                console.error("Critical Login Catch:", err);
+                alert("حدث خطأ أثناء الاتصال بالخادم.");
             }
         }
 
@@ -260,21 +246,29 @@
             document.getElementById('login-modal').classList.remove('hidden');
         }
 
-        // جلب البيانات الفعلية المخزنة فقط
+        // 2. دالة جلب كافة البيانات المزامنة من قاعدة البيانات
         async function loadAllDataFromSupabase() {
-            const { data: regData } = await _supabase.from('regions').select('*');
-            regions = regData || [];
+            try {
+                // جلب المناطق
+                const { data: regData } = await _supabase.from('regions').select('*');
+                regions = regData || [];
 
-            const { data: repData } = await _supabase.from('reps').select('*');
-            reps = repData || [];
+                // جلب المندوبين
+                const { data: repData } = await _supabase.from('reps').select('*');
+                reps = repData || [];
 
-            const { data: custData } = await _supabase.from('customers').select('*');
-            customers = custData || [];
+                // جلب العملاء
+                const { data: custData } = await _supabase.from('customers').select('*');
+                customers = custData || [];
 
-            const { data: invData } = await _supabase.from('invoices').select('*');
-            invoices = invData || [];
+                // جلب الفواتير
+                const { data: invData } = await _supabase.from('invoices').select('*');
+                invoices = invData || [];
 
-            renderAll();
+                renderAll();
+            } catch (err) {
+                console.error("Error loading data from Supabase:", err);
+            }
         }
 
         function renderAll() {
@@ -284,7 +278,149 @@
             renderCustomers();
         }
 
-        // إدارة المناطق في قاعدة البيانات
+        // 3. إضافة وتوفير المندوبين
+        async function handleAddRep(e) {
+            if (e) e.preventDefault();
+            const name = document.getElementById('rep-name').value.trim();
+            const phone = document.getElementById('rep-phone').value.trim();
+
+            if (!name) return alert("يرجى إدخال اسم المندوب");
+
+            const { data, error } = await _supabase.from('reps').insert([{ name, phone }]);
+            if (error) {
+                alert("حدث خطأ أثناء إضافة المندوب: " + error.message);
+            } else {
+                alert("تم إضافة المندوب بنجاح!");
+                document.getElementById('rep-name').value = '';
+                document.getElementById('rep-phone').value = '';
+                await loadAllDataFromSupabase();
+            }
+        }
+
+        // 4. إضافة وتوفير العملاء
+        async function handleAddCustomer(e) {
+            if (e) e.preventDefault();
+            const name = document.getElementById('cust-name').value.trim();
+            const phone = document.getElementById('cust-phone').value.trim();
+            const region_id = document.getElementById('cust-region').value;
+            const rep_id = document.getElementById('cust-rep').value;
+
+            if (!name) return alert("يرجى إدخال اسم العميل");
+
+            const { data, error } = await _supabase.from('customers').insert([{ 
+                name, 
+                phone, 
+                region_id: region_id ? parseInt(region_id) : null, 
+                rep_id: rep_id ? parseInt(rep_id) : null 
+            }]);
+
+            if (error) {
+                alert("حدث خطأ أثناء إضافة العميل: " + error.message);
+            } else {
+                alert("تم إضافة العميل بنجاح!");
+                document.getElementById('cust-name').value = '';
+                document.getElementById('cust-phone').value = '';
+                await loadAllDataFromSupabase();
+            }
+        }
+
+        // 5. إضافة وتوفير الفواتير
+        async function handleAddInvoice(e) {
+            if (e) e.preventDefault();
+            const inv_num = document.getElementById('inv-num').value.trim();
+            const cust_id = document.getElementById('inv-cust').value;
+            const amount = document.getElementById('inv-amount').value;
+            const inv_date = document.getElementById('inv-date').value;
+
+            if (!inv_num || !amount || !cust_id) return alert("يرجى تعبئة الحقول الأساسية للفاتورة");
+
+            const { data, error } = await _supabase.from('invoices').insert([{ 
+                invoice_number: inv_num, 
+                customer_id: parseInt(cust_id), 
+                amount: parseFloat(amount), 
+                invoice_date: inv_date 
+            }]);
+
+            if (error) {
+                alert("حدث خطأ أثناء إضافة الفاتورة: " + error.message);
+            } else {
+                alert("تم إدخال الفاتورة بنجاح!");
+                document.getElementById('inv-num').value = '';
+                document.getElementById('inv-amount').value = '';
+                await loadAllDataFromSupabase();
+            }
+        }
+
+        // 6. إضافة وتوفير المناطق
+        async function handleAddRegion(e) {
+            if (e) e.preventDefault();
+            const name = document.getElementById('reg-name').value.trim();
+            if (!name) return alert("يرجى إدخال اسم المنطقة");
+
+            const { data, error } = await _supabase.from('regions').insert([{ name }]);
+            if (error) {
+                alert("حدث خطأ أثناء إدخال المنطقة: " + error.message);
+            } else {
+                alert("تم إضافة المنطقة بنجاح!");
+                document.getElementById('reg-name').value = '';
+                await loadAllDataFromSupabase();
+            }
+        }
+
+        async function editRegion(id, currentName) {
+            const newName = prompt("أدخل الاسم الجديد للمنطقة:", currentName);
+            if (newName && newName.trim() !== "") {
+                const { error } = await _supabase.from('regions').update({ name: newName.trim() }).eq('id', id);
+                if (error) alert("تعذر تعديل المنطقة: " + error.message);
+                else await loadAllDataFromSupabase();
+            }
+        }
+
+        async function deleteRegion(id) {
+            if (confirm("هل أنت تأكد من حذف هذه المنطقة؟")) {
+                const { error } = await _supabase.from('regions').delete().eq('id', id);
+                if (error) alert("تعذر حذف المنطقة: " + error.message);
+                else await loadAllDataFromSupabase();
+            }
+        }
+
+        // 7. حفظ مستخدم جديد
+        async function handleSaveUser(e) {
+            if (e) e.preventDefault();
+            const u = document.getElementById('usr-name').value.trim();
+            const p = document.getElementById('usr-pass').value.trim();
+
+            if (!u || !p) return alert("يرجى تعبئة البيانات كاملة");
+
+            const { data, error } = await _supabase.from('app_users').insert([{ username: u, password: p }]);
+            if (error) alert("تعذر إدخال المستخدم: " + error.message);
+            else {
+                alert("تم حفظ المستخدم بنجاح!");
+                document.getElementById('usr-name').value = '';
+                document.getElementById('usr-pass').value = '';
+            }
+        }
+
+        // 8. رسم وعرض القوائم والجداول
+        function renderDropdowns() {
+            const custSelect = document.getElementById('inv-cust');
+            const regSelect = document.getElementById('cust-region');
+            const repSelect = document.getElementById('cust-rep');
+
+            if(custSelect) {
+                custSelect.innerHTML = '<option value="">-- اختر العميل --</option>' + 
+                    customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            }
+            if(regSelect) {
+                regSelect.innerHTML = '<option value="">-- اختر المنطقة --</option>' + 
+                    regions.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            }
+            if(repSelect) {
+                repSelect.innerHTML = '<option value="">-- اختر المندوب --</option>' + 
+                    reps.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+            }
+        }
+
         function renderRegionsTable() {
             const body = document.getElementById('regions-table-body');
             if(!body) return;
@@ -299,84 +435,61 @@
             `).join('');
         }
 
-        async function handleAddRegion(e) {
-            e.preventDefault();
-            const name = document.getElementById('reg-name').value.trim();
-            await _supabase.from('regions').insert([{ name }]);
-            document.getElementById('reg-name').value = '';
-            await loadAllDataFromSupabase();
-        }
-
-        async function editRegion(id, currentName) {
-            const newName = prompt("أدخل الاسم الجديد للمنطقة:", currentName);
-            if (newName && newName.trim() !== "") {
-                await _supabase.from('regions').update({ name: newName.trim() }).eq('id', id);
-                await loadAllDataFromSupabase();
-            }
-        }
-
-        async function deleteRegion(id) {
-            if (confirm("هل أنت تأكد من حذف هذه المنطقة؟")) {
-                await _supabase.from('regions').delete().eq('id', id);
-                await loadAllDataFromSupabase();
-            }
-        }
-
-        function renderDropdowns() {
-            const custSelect = document.getElementById('inv-cust');
-            const regSelect = document.getElementById('cust-region');
-            const repSelect = document.getElementById('cust-rep');
-            const usrRegsList = document.getElementById('usr-regions-checklist');
-
-            if(custSelect) custSelect.innerHTML = customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            if(regSelect) regSelect.innerHTML = regions.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-            if(repSelect) repSelect.innerHTML = reps.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-
-            if(usrRegsList) {
-                usrRegsList.innerHTML = regions.map(r => `
-                    <label class="flex items-center gap-2 text-xs">
-                        <input type="checkbox" value="${r.id}" class="usr-reg-cb rounded text-indigo-600">
-                        <span>${r.name}</span>
-                    </label>
-                `).join('');
-            }
-        }
-
         function renderInvoices() {
             const allBody = document.getElementById('all-invoices-body');
             const countElem = document.getElementById('stat-total-count');
+            const totalCommElem = document.getElementById('stat-total-comm');
+            
+            let commTotal = 0;
             if(countElem) countElem.innerText = invoices.length;
 
-            if(!allBody) return;
-            allBody.innerHTML = invoices.map(inv => {
-                const cust = customers.find(c => c.id == inv.customer_id) || {};
-                return `
-                    <tr>
-                        <td class="p-3 font-bold">${inv.invoice_number || inv.id}</td>
-                        <td class="p-3">${cust.name || '-'}</td>
-                        <td class="p-3">${inv.invoice_date || '-'}</td>
-                        <td class="p-3 font-extrabold">${Number(inv.amount || 0).toLocaleString()}</td>
-                        <td class="p-3 text-emerald-600 font-bold">${(Number(inv.amount || 0) * 0.05).toLocaleString()}</td>
-                        <td class="p-3"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px]">مسجلة</span></td>
-                    </tr>
-                `;
-            }).join('');
+            if(allBody) {
+                allBody.innerHTML = invoices.map(inv => {
+                    const cust = customers.find(c => c.id == inv.customer_id) || {};
+                    const comm = (Number(inv.amount || 0) * 0.05);
+                    commTotal += comm;
+                    return `
+                        <tr>
+                            <td class="p-3 font-bold">${inv.invoice_number || inv.id}</td>
+                            <td class="p-3">${cust.name || '-'}</td>
+                            <td class="p-3">${inv.invoice_date || '-'}</td>
+                            <td class="p-3 font-extrabold">${Number(inv.amount || 0).toLocaleString()}</td>
+                            <td class="p-3 text-emerald-600 font-bold">${comm.toLocaleString()}</td>
+                            <td class="p-3"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px]">مسجلة</span></td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            if(totalCommElem) totalCommElem.innerText = commTotal.toLocaleString();
         }
 
         function renderCustomers() {
             const grid = document.getElementById('customers-grid');
             if(!grid) return;
-            grid.innerHTML = customers.map(c => `
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <p class="font-bold text-slate-800">${c.name}</p>
-                    <p class="text-slate-500 mt-1">الجوال: ${c.phone || '-'}</p>
-                </div>
-            `).join('');
+            grid.innerHTML = customers.map(c => {
+                const reg = regions.find(r => r.id == c.region_id);
+                const rep = reps.find(rp => rp.id == c.rep_id);
+                return `
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <p class="font-bold text-slate-800">${c.name}</p>
+                        <p class="text-slate-500 mt-1">الجوال: ${c.phone || '-'}</p>
+                        <div class="mt-2 text-[10px] flex justify-between text-slate-400">
+                            <span>المنطقة: ${reg ? reg.name : '-'}</span>
+                            <span>المندوب: ${rep ? rep.name : '-'}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('text-indigo-400', 'border-b-2', 'border-indigo-500'));
+            
             document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if(activeBtn) activeBtn.classList.add('text-indigo-400', 'border-b-2', 'border-indigo-500');
         }
     </script>
 </body>
