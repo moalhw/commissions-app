@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة العمولات والفواتير المباشر</title>
+    <title>نظام إدارة العمولات والفواتير للمندوبين والمدراء</title>
     <!-- Tailwind CSS & Supabase JS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -24,13 +24,13 @@
                     🔐
                 </div>
                 <h2 class="text-2xl font-bold text-slate-800">تسجيل الدخول للنظام</h2>
-                <p class="text-xs text-slate-500 mt-1">البيانات تتحقق مباشرة من قاعدة البيانات Supabase</p>
+                <p class="text-xs text-slate-500 mt-1">أدخل اسم المستخدم (رقم الجوال للمندوب) وكلمة المرور</p>
             </div>
             
             <form onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">اسم المستخدم</label>
-                    <input type="text" id="login-user" required placeholder="أدخل اسم المستخدم" class="w-full p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">اسم المستخدم / رقم الجوال</label>
+                    <input type="text" id="login-user" required placeholder="مثال: 0500000000 أو admin" class="w-full p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">كلمة المرور</label>
@@ -50,7 +50,7 @@
                 <span class="text-2xl">📈</span>
                 <div>
                     <h1 class="text-base font-extrabold leading-none">نظام العمولات المباشر</h1>
-                    <p class="text-[10px] text-slate-400 mt-1">مرتبط بقاعدة البيانات الحقيقية</p>
+                    <p id="system-scope-text" class="text-[10px] text-slate-400 mt-1">جاري التحميل...</p>
                 </div>
             </div>
             
@@ -69,8 +69,8 @@
             <button id="nav-dashboard" onclick="switchTab('dashboard')" class="tab-btn px-4 py-3 text-indigo-400 border-b-2 border-indigo-500">📊 لوحة التحكم</button>
             <button id="nav-invoices" onclick="switchTab('invoices')" class="tab-btn px-4 py-3 text-slate-400 hover:text-white">📄 الفواتير والعمولات</button>
             <button id="nav-customers" onclick="switchTab('customers')" class="tab-btn px-4 py-3 text-slate-400 hover:text-white">👥 العملاء والمندوبين</button>
-            <button id="nav-users" onclick="switchTab('users')" class="tab-btn px-4 py-3 text-slate-400 hover:text-white">🔐 المستخدمين والصلاحيات</button>
-            <button id="nav-settings" onclick="switchTab('settings')" class="tab-btn px-4 py-3 text-slate-400 hover:text-white">⚙️ الإعدادات والمناطق</button>
+            <button id="nav-users" onclick="switchTab('users')" class="tab-btn admin-only px-4 py-3 text-slate-400 hover:text-white">🔐 المستخدمين والصلاحيات</button>
+            <button id="nav-settings" onclick="switchTab('settings')" class="tab-btn admin-only px-4 py-3 text-slate-400 hover:text-white">⚙️ الإعدادات والمناطق</button>
         </div>
     </header>
 
@@ -113,7 +113,7 @@
             </div>
 
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-                <h3 class="text-sm font-bold mb-4 text-slate-800">سجل الفواتير الكلي من قاعدة البيانات</h3>
+                <h3 class="text-sm font-bold mb-4 text-slate-800">سجل الفواتير والعمولات المتاحة</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-right text-xs">
                         <thead class="bg-slate-50 text-slate-500 font-bold border-b">
@@ -135,12 +135,14 @@
         <!-- العملاء والمندوبين -->
         <section id="tab-customers" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div id="section-add-rep" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                    <h4 class="font-bold text-sm mb-3">إضافة مندوب جديد</h4>
+                <!-- قسم إضافة مندوب - متاح للمدير فقط -->
+                <div id="section-add-rep" class="admin-only bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <h4 class="font-bold text-sm mb-1">إضافة مندوب جديد</h4>
+                    <p class="text-[11px] text-slate-400 mb-3">سيتم إنشاء حساب دخول تلقائياً برقم الجوال كلمة المرور الافتراضية (123456)</p>
                     <form onsubmit="handleAddRep(event)" class="space-y-3 text-xs">
                         <input type="text" id="rep-name" placeholder="اسم المندوب" required class="w-full p-2.5 border rounded-xl">
-                        <input type="tel" id="rep-phone" placeholder="رقم الجوال" class="w-full p-2.5 border rounded-xl">
-                        <button type="submit" class="w-full bg-slate-800 text-white font-bold py-2.5 rounded-xl">حفظ المندوب</button>
+                        <input type="tel" id="rep-phone" placeholder="رقم الجوال (اسم المستخدم)" required class="w-full p-2.5 border rounded-xl">
+                        <button type="submit" class="w-full bg-slate-800 text-white font-bold py-2.5 rounded-xl">حفظ وإنشاء الحساب</button>
                     </form>
                 </div>
 
@@ -159,22 +161,22 @@
             </div>
 
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                <h4 class="font-bold text-sm mb-4">دليل العملاء والمندوبين المباشر</h4>
+                <h4 class="font-bold text-sm mb-4">دليل العملاء الخاص بك</h4>
                 <div id="customers-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs"></div>
             </div>
         </section>
 
-        <!-- المستخدمين والصلاحيات -->
-        <section id="tab-users" class="tab-content hidden space-y-6">
+        <!-- المستخدمين والصلاحيات (للمدير فقط) -->
+        <section id="tab-users" class="tab-content admin-only hidden space-y-6">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-                <h3 class="text-sm font-bold">إضافة مستخدم جديد لقاعدة البيانات</h3>
+                <h3 class="text-sm font-bold">إضافة مستخدم إداري أو تعديل مستخدم</h3>
                 <form onsubmit="handleSaveUser(event)" class="space-y-3 text-xs max-w-xl">
                     <input type="text" id="usr-name" placeholder="اسم المستخدم" required class="w-full p-2.5 border rounded-xl">
                     <input type="password" id="usr-pass" placeholder="كلمة المرور" required class="w-full p-2.5 border rounded-xl">
                     
                     <label class="block font-bold">دور المستخدم (الصلاحية):</label>
                     <select id="usr-role" class="w-full p-2.5 border rounded-xl bg-white">
-                        <option value="user">مخدم / مندوب (مستخدم عادي)</option>
+                        <option value="user">مستخدم عادي / مندوب</option>
                         <option value="admin">مدير النظام (Admin)</option>
                     </select>
 
@@ -183,8 +185,8 @@
             </div>
         </section>
 
-        <!-- الإعدادات والمناطق -->
-        <section id="tab-settings" class="tab-content hidden space-y-6">
+        <!-- الإعدادات والمناطق (للمدير فقط) -->
+        <section id="tab-settings" class="tab-content admin-only hidden space-y-6">
             <!-- ضبط فترة العمولات -->
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3 text-xs">
                 <h3 class="text-sm font-bold text-slate-800">إعدادات فترة العمولات</h3>
@@ -230,7 +232,7 @@
         let regions = [], reps = [], customers = [], invoices = [];
         let commissionLimitDays = 90;
 
-        // 1. تسجيل الدخول
+        // 1. تسجيل الدخول والتحقق من الدور
         async function handleLogin(e) {
             if (e) e.preventDefault();
             const uInput = document.getElementById('login-user').value.trim();
@@ -251,19 +253,35 @@
                     currentUser = data;
                     document.getElementById('login-modal').classList.add('hidden');
                     document.getElementById('user-display-name').innerText = currentUser.username;
-                    document.getElementById('user-display-role').innerText = "الدور: " + (currentUser.role === 'admin' ? 'مدير' : 'مستخدم');
+                    document.getElementById('user-display-role').innerText = "الدور: " + (currentUser.role === 'admin' ? 'مدير النظام' : 'مندوب مبيعات');
+
+                    applyRolePermissions();
                     await loadSettings();
                     await loadAllDataFromSupabase();
                 }
             } catch (err) {
                 console.error("Critical Login Catch:", err);
-                alert("حدث خطأ أثناء الاتصال الخادم.");
+                alert("حدث خطأ أثناء الاتصال بالخادم.");
+            }
+        }
+
+        function applyRolePermissions() {
+            const isAdmin = currentUser && currentUser.role === 'admin';
+            const scopeText = document.getElementById('system-scope-text');
+            
+            if (isAdmin) {
+                scopeText.innerText = 'عرض كافة بيانات النظام (وضع المدير)';
+                document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+            } else {
+                scopeText.innerText = 'عرض البيانات الخاصة بك فقط (وضع المندوب)';
+                document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
             }
         }
 
         function logout() {
             currentUser = null;
             document.getElementById('login-modal').classList.remove('hidden');
+            switchTab('dashboard');
         }
 
         // 2. تحميل الإعدادات والفترة
@@ -296,20 +314,39 @@
             }
         }
 
-        // 3. دالة جلب البيانات من قاعدة البيانات
+        // 3. جلب البيانات وتصفيتها بحسب المستخدم التسجيل (مدير أم مندوب)
         async function loadAllDataFromSupabase() {
             try {
+                const isAdmin = currentUser.role === 'admin';
+                const repId = currentUser.rep_id;
+
+                // جلب المناطق والمندوبين
                 const { data: regData } = await _supabase.from('regions').select('*');
                 regions = regData || [];
 
                 const { data: repData } = await _supabase.from('reps').select('*');
                 reps = repData || [];
 
-                const { data: custData } = await _supabase.from('customers').select('*');
+                // جلب العملاء وتصفيتهم للمندوب
+                let custQuery = _supabase.from('customers').select('*');
+                if (!isAdmin && repId) {
+                    custQuery = custQuery.eq('rep_id', repId);
+                }
+                const { data: custData } = await custQuery;
                 customers = custData || [];
 
-                const { data: invData } = await _supabase.from('invoices').select('*');
-                invoices = invData || [];
+                // جلب الفواتير المتاحة للعملاء المصرح برؤيتهم
+                const custIds = customers.map(c => c.id);
+                let invData = [];
+                if (custIds.length > 0 || isAdmin) {
+                    let invQuery = _supabase.from('invoices').select('*');
+                    if (!isAdmin) {
+                        invQuery = invQuery.in('customer_id', custIds);
+                    }
+                    const res = await invQuery;
+                    invData = res.data || [];
+                }
+                invoices = invData;
 
                 renderAll();
             } catch (err) {
@@ -324,32 +361,58 @@
             renderCustomers();
         }
 
-        // 4. إضافة المندوبين
+        // 4. إضافة المندوب + إنشاء حسابه تلقائياً
         async function handleAddRep(e) {
             if (e) e.preventDefault();
             const name = document.getElementById('rep-name').value.trim();
             const phone = document.getElementById('rep-phone').value.trim();
 
-            if (!name) return alert("يرجى إدخال اسم المندوب");
+            if (!name || !phone) return alert("يرجى إدخال اسم المندوب ورقم الجوال");
 
-            const { data, error } = await _supabase.from('reps').insert([{ name, phone }]);
-            if (error) {
-                alert("حدث خطأ أثناء إضافة المندوب: " + error.message);
+            // أ) إضافة المندوب في جدول المندوبين
+            const { data: repData, error: repErr } = await _supabase
+                .from('reps')
+                .insert([{ name, phone }])
+                .select()
+                .single();
+
+            if (repErr) {
+                alert("حدث خطأ أثناء إضافة المندوب (قد يكون رقم الجوال مكرراً): " + repErr.message);
+                return;
+            }
+
+            // ب) إنشاء حساب مستخدم للمندوب تلقائياً بكلمة مرور افتراضية 123456
+            const { error: userErr } = await _supabase.from('app_users').insert([{
+                username: phone,
+                password: '123456',
+                role: 'user',
+                rep_id: repData.id
+            }]);
+
+            if (userErr) {
+                alert("تم إضافة المندوب لكن حدث خطأ أثناء إيقاف حسابه تلقائياً: " + userErr.message);
             } else {
-                alert("تم إضافة المندوب بنجاح!");
+                alert(`تم إضافة المندوب بنجاح!\nبيانات الدخول للمندوب:\nاسم المستخدم: ${phone}\nكلمة المرور الافتراضية: 123456`);
                 document.getElementById('rep-name').value = '';
                 document.getElementById('rep-phone').value = '';
                 await loadAllDataFromSupabase();
             }
         }
 
-        // 5. إضافة العملاء
+        // 5. إضافة العملاء (تحديد المندوب تلقائياً إذا كان المسجل مندوب)
         async function handleAddCustomer(e) {
             if (e) e.preventDefault();
             const name = document.getElementById('cust-name').value.trim();
             const phone = document.getElementById('cust-phone').value.trim();
             const region_id = document.getElementById('cust-region').value;
-            const rep_id = document.getElementById('cust-rep').value;
+            
+            const isAdmin = currentUser.role === 'admin';
+            let rep_id = document.getElementById('cust-rep').value;
+
+            // إذا كان المسجل مندوب عادي، ربط العميل به تلقائياً
+            if (!isAdmin && currentUser.rep_id) {
+                rep_id = currentUser.rep_id;
+            }
 
             if (!name) return alert("يرجى إدخال اسم العميل");
 
@@ -378,7 +441,7 @@
             const amount = document.getElementById('inv-amount').value;
             const inv_date = document.getElementById('inv-date').value;
 
-            if (!inv_num || !amount || !cust_id) return alert("يرجى تعبئة الحقول الأساسية للفاتورة");
+            if (!inv_num || !amount || !cust_id) return alert("يرجى تعبئة كافة الحقول المطلوبة للفاتورة");
 
             const { data, error } = await _supabase.from('invoices').insert([{ 
                 invoice_number: inv_num, 
@@ -397,7 +460,7 @@
             }
         }
 
-        // 7. إدارة المستخدمين وإسناد الأدوار
+        // 7. إدارة المستخدمين (للمدير)
         async function handleSaveUser(e) {
             if (e) e.preventDefault();
             const u = document.getElementById('usr-name').value.trim();
@@ -448,7 +511,7 @@
             }
         }
 
-        // 9. عرض وإسقاط الجداول والقوائم
+        // 9. عرض البيانات وتحديث القوائم المنسدلة
         function renderDropdowns() {
             const custSelect = document.getElementById('inv-cust');
             const regSelect = document.getElementById('cust-region');
@@ -463,8 +526,14 @@
                     regions.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
             }
             if(repSelect) {
-                repSelect.innerHTML = '<option value="">-- اختر المندوب --</option>' + 
-                    reps.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+                // إخفاء خيار المندوب إذا كان المسجل مندوب عادي
+                if (currentUser && currentUser.role !== 'admin') {
+                    repSelect.classList.add('hidden');
+                } else {
+                    repSelect.classList.remove('hidden');
+                    repSelect.innerHTML = '<option value="">-- اختر المندوب --</option>' + 
+                        reps.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+                }
             }
         }
 
@@ -502,7 +571,6 @@
                     const comm = (Number(inv.amount || 0) * 0.05);
                     commTotal += comm;
 
-                    // احتساب المهلة بناءً على تاريخ الفاتورة والإعدادات
                     let isExpired = false;
                     if(inv.invoice_date) {
                         const invDate = new Date(inv.invoice_date);
