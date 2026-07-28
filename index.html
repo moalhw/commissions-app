@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة العمولات والفواتير للمندوبين والمدراء</title>
+    <title>نظام متابعة الفواتير والعملاء المباشر</title>
     <!-- Tailwind CSS & Supabase JS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -11,7 +11,11 @@
     <style>
         body { font-family: 'Tajawal', sans-serif; }
         .hidden { display: none !important; }
-        @media print { .no-print { display: none !important; } }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; }
+            .print-card { border: none !important; shadow: none !important; }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
@@ -21,22 +25,22 @@
         <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md border border-slate-100">
             <div class="text-center mb-6">
                 <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto text-3xl mb-3">
-                    🔐
+                    📲
                 </div>
                 <h2 class="text-2xl font-bold text-slate-800">تسجيل الدخول للنظام</h2>
-                <p class="text-xs text-slate-500 mt-1">أدخل اسم المستخدم (رقم الجوال للمندوب) وكلمة المرور</p>
+                <p class="text-xs text-slate-500 mt-1">أدخل اسم المستخدم وكلمة المرور للمتابعة</p>
             </div>
             
             <form onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">اسم المستخدم / رقم الجوال</label>
-                    <input type="text" id="login-user" required placeholder="مثال: 0500000000 أو admin" class="w-full p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">اسم المستخدم</label>
+                    <input type="text" id="login-user" required placeholder="اسم المستخدم" class="w-full p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">كلمة المرور</label>
                     <input type="password" id="login-pass" required placeholder="••••••••" class="w-full p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
-                <button type="submit" id="login-btn" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition shadow-lg">
+                <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition shadow-lg">
                     دخول إلى النظام
                 </button>
             </form>
@@ -47,10 +51,10 @@
     <header class="bg-slate-900 text-white shadow-xl no-print sticky top-0 z-40">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center flex-wrap gap-3">
             <div class="flex items-center gap-3">
-                <span class="text-2xl">📈</span>
+                <span class="text-2xl">📋</span>
                 <div>
-                    <h1 class="text-base font-extrabold leading-none">نظام العمولات المباشر</h1>
-                    <p id="system-scope-text" class="text-[10px] text-slate-400 mt-1">جاري التحميل...</p>
+                    <h1 class="text-base font-extrabold leading-none">نظام متابعة الفواتير والعملاء</h1>
+                    <p id="system-scope-text" class="text-[10px] text-slate-400 mt-1">جاري تحميل النطاق...</p>
                 </div>
             </div>
             
@@ -66,173 +70,174 @@
         </div>
 
         <div class="bg-slate-950/60 px-4 flex gap-2 text-xs font-bold border-t border-slate-800/80 overflow-x-auto">
-            <button id="nav-dashboard" onclick="switchTab('dashboard')" class="tab-btn px-4 py-3 text-indigo-400 border-b-2 border-indigo-500">📊 لوحة التحكم</button>
-            <button id="nav-invoices" onclick="switchTab('invoices')" class="tab-btn px-4 py-3 text-slate-400 hover:text-white">📄 الفواتير والعمولات</button>
-            <button id="nav-customers" onclick="switchTab('customers')" class="tab-btn px-4 py-3 text-slate-400 hover:text-white">👥 العملاء والمندوبين</button>
-            <button id="nav-users" onclick="switchTab('users')" class="tab-btn admin-only px-4 py-3 text-slate-400 hover:text-white">🔐 المستخدمين والصلاحيات</button>
-            <button id="nav-settings" onclick="switchTab('settings')" class="tab-btn admin-only px-4 py-3 text-slate-400 hover:text-white">⚙️ الإعدادات والمناطق</button>
+            <button id="nav-invoices" onclick="switchTab('invoices')" class="tab-btn px-4 py-3 text-indigo-400 border-b-2 border-indigo-500">📄 متابعة الفواتير</button>
+            <button id="nav-customers" onclick="switchTab('customers')" class="tab-btn px-4 py-3 text-slate-400 hover:text-white">👥 دليل العملاء</button>
+            <button id="nav-users" onclick="switchTab('users')" class="tab-btn admin-only px-4 py-3 text-slate-400 hover:text-white">🔐 إدارة المستخدمين</button>
+            <button id="nav-settings" onclick="switchTab('settings')" class="tab-btn px-4 py-3 text-slate-400 hover:text-white">⚙️ الإعدادات والمحاسبين</button>
         </div>
     </header>
 
     <!-- 3. المحتوى الرئيسي -->
     <main class="container mx-auto px-4 py-6 flex-1">
 
-        <!-- لوحة التحكم -->
-        <section id="tab-dashboard" class="tab-content space-y-6">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                    <span class="text-xs font-bold text-slate-400">إجمالي الفواتير</span>
-                    <h3 id="stat-total-count" class="text-3xl font-extrabold text-slate-800 mt-2">0</h3>
-                </div>
-                <div class="bg-emerald-50/60 p-5 rounded-2xl shadow-sm border border-emerald-100">
-                    <span class="text-xs font-bold text-emerald-600">عمولات مستحقة سارية</span>
-                    <h3 id="stat-valid-comm" class="text-3xl font-extrabold text-emerald-700 mt-2">0</h3>
-                </div>
-                <div class="bg-rose-50/60 p-5 rounded-2xl shadow-sm border border-rose-100">
-                    <span class="text-xs font-bold text-rose-600">عمولات منتهية المهلة</span>
-                    <h3 id="stat-lost-comm" class="text-3xl font-extrabold text-rose-700 mt-2">0</h3>
-                </div>
-                <div class="bg-amber-50/60 p-5 rounded-2xl shadow-sm border border-amber-100">
-                    <span class="text-xs font-bold text-amber-600">مجموع العمولات الكلي</span>
-                    <h3 id="stat-total-comm" class="text-3xl font-extrabold text-amber-700 mt-2">0</h3>
-                </div>
-            </div>
-        </section>
-
-        <!-- الفواتير والعمولات -->
-        <section id="tab-invoices" class="tab-content hidden space-y-6">
-            <div id="section-add-invoice" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                <h3 class="text-sm font-bold mb-4 text-slate-800">إدخال فاتورة جديدة</h3>
+        <!-- الفواتير والمتابعة -->
+        <section id="tab-invoices" class="tab-content space-y-6">
+            <!-- إضافة فاتورة جديدة -->
+            <div id="section-add-invoice" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 no-print">
+                <h3 class="text-sm font-bold mb-4 text-slate-800">إدخال فاتورة جديدة للمتابعة</h3>
                 <form onsubmit="handleAddInvoice(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
                     <input type="text" id="inv-num" required placeholder="رقم الفاتورة" class="p-2.5 border rounded-xl">
                     <select id="inv-cust" required class="p-2.5 border rounded-xl bg-white"></select>
-                    <input type="number" step="0.01" id="inv-amount" required placeholder="المبلغ الصافي" class="p-2.5 border rounded-xl">
+                    <input type="number" step="0.01" id="inv-amount" required placeholder="مبلغ الفاتورة" class="p-2.5 border rounded-xl">
                     <input type="date" id="inv-date" required class="p-2.5 border rounded-xl">
                     <button type="submit" class="bg-indigo-600 text-white font-bold py-2.5 rounded-xl hover:bg-indigo-700">حفظ الفاتورة</button>
                 </form>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-                <h3 class="text-sm font-bold mb-4 text-slate-800">سجل الفواتير والعمولات المتاحة</h3>
+            <!-- شريط الفلترة المتقدم والطباعة -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 no-print space-y-3 text-xs">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <h3 class="font-bold text-slate-800">تصفية الفواتير والمتابعة:</h3>
+                    <button onclick="window.print()" class="bg-slate-800 text-white font-bold px-4 py-2 rounded-xl flex items-center gap-1">
+                        🖨️ طباعة الكشف الحالي
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block mb-1 text-slate-500 font-bold">تصفية المندوب:</label>
+                        <select id="filter-rep" onchange="renderInvoices()" class="w-full p-2 border rounded-xl bg-slate-50"></select>
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500 font-bold">حالة الفاتورة والمهلة:</label>
+                        <select id="filter-status" onchange="renderInvoices()" class="w-full p-2 border rounded-xl bg-slate-50">
+                            <option value="all">جميع الفواتير</option>
+                            <option value="active">جديدة / سارية المهلة</option>
+                            <option value="expired">غير مرحلة (تجاوزت الـ 30 يوم)</option>
+                            <option value="paid">تم سدادها</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-slate-500 font-bold">إرسال إشعار السداد للمحاسب:</label>
+                        <select id="accountant-select" class="w-full p-2 border rounded-xl bg-slate-50"></select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- جدول الفواتير الرئيسي -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 print-card">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-bold text-slate-800">سجل الفواتير والمتابعة المباشرة</h3>
+                    <span id="inv-count-badge" class="bg-indigo-50 text-indigo-700 font-bold px-3 py-1 rounded-full text-xs">عدد: 0</span>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-right text-xs">
                         <thead class="bg-slate-50 text-slate-500 font-bold border-b">
                             <tr>
                                 <th class="p-3">رقم الفاتورة</th>
-                                <th class="p-3">العميل</th>
+                                <th class="p-3">اسم العميل</th>
+                                <th class="p-3">المندوب</th>
                                 <th class="p-3">التاريخ</th>
-                                <th class="p-3">المبلغ الصافي</th>
-                                <th class="p-3">العمولة (5%)</th>
-                                <th class="p-3">حالة الاستحقاق</th>
+                                <th class="p-3">المبلغ</th>
+                                <th class="p-3">المدة والمهلة المتبقية</th>
+                                <th class="p-3 text-center no-print">إجراءات المتابعة والسداد</th>
                             </tr>
                         </thead>
-                        <tbody id="all-invoices-body" class="divide-y divide-slate-100"></tbody>
+                        <tbody id="invoices-table-body" class="divide-y divide-slate-100"></tbody>
                     </table>
                 </div>
             </div>
         </section>
 
-        <!-- العملاء والمندوبين -->
+        <!-- دليل العملاء -->
         <section id="tab-customers" class="tab-content hidden space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- قسم إضافة مندوب - متاح للمدير فقط -->
-                <div id="section-add-rep" class="admin-only bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                    <h4 class="font-bold text-sm mb-1">إضافة مندوب جديد</h4>
-                    <p class="text-[11px] text-slate-400 mb-3">سيتم إنشاء حساب دخول تلقائياً برقم الجوال كلمة المرور الافتراضية (123456)</p>
-                    <form onsubmit="handleAddRep(event)" class="space-y-3 text-xs">
-                        <input type="text" id="rep-name" placeholder="اسم المندوب" required class="w-full p-2.5 border rounded-xl">
-                        <input type="tel" id="rep-phone" placeholder="رقم الجوال (اسم المستخدم)" required class="w-full p-2.5 border rounded-xl">
-                        <button type="submit" class="w-full bg-slate-800 text-white font-bold py-2.5 rounded-xl">حفظ وإنشاء الحساب</button>
-                    </form>
-                </div>
-
-                <div id="section-add-cust" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                    <h4 class="font-bold text-sm mb-3">إضافة عميل جديد</h4>
-                    <form onsubmit="handleAddCustomer(event)" class="space-y-3 text-xs">
-                        <input type="text" id="cust-name" placeholder="اسم العميل" required class="w-full p-2.5 border rounded-xl">
-                        <input type="tel" id="cust-phone" placeholder="رقم الواتساب" class="w-full p-2.5 border rounded-xl">
-                        <div class="grid grid-cols-2 gap-2">
-                            <select id="cust-region" class="w-full p-2.5 border rounded-xl bg-white"></select>
-                            <select id="cust-rep" class="w-full p-2.5 border rounded-xl bg-white"></select>
-                        </div>
-                        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-xl">حفظ العميل</button>
-                    </form>
-                </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 no-print">
+                <h4 class="font-bold text-sm mb-3">تسجيل عميل جديد وربطه بالمندوب</h4>
+                <form onsubmit="handleAddCustomer(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                    <input type="text" id="cust-name" placeholder="اسم العميل" required class="p-2.5 border rounded-xl">
+                    <input type="tel" id="cust-phone" placeholder="رقم الواتساب (مثال: 967770000000)" required class="p-2.5 border rounded-xl">
+                    <select id="cust-region" class="p-2.5 border rounded-xl bg-white"></select>
+                    <select id="cust-rep" class="p-2.5 border rounded-xl bg-white"></select>
+                    <button type="submit" class="sm:col-span-2 lg:col-span-4 bg-indigo-600 text-white font-bold py-2.5 rounded-xl hover:bg-indigo-700">حفظ العميل</button>
+                </form>
             </div>
 
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                <h4 class="font-bold text-sm mb-4">دليل العملاء الخاص بك</h4>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 print-card">
+                <h4 class="font-bold text-sm mb-4">دليل العملاء المسجلين</h4>
                 <div id="customers-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs"></div>
             </div>
         </section>
 
-        <!-- المستخدمين والصلاحيات (للمدير فقط) -->
+        <!-- إدارة المستخدمين (للمدير) -->
         <section id="tab-users" class="tab-content admin-only hidden space-y-6">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-                <h3 class="text-sm font-bold">إضافة مستخدم إداري أو تعديل مستخدم</h3>
-                <form onsubmit="handleSaveUser(event)" class="space-y-3 text-xs max-w-xl">
-                    <input type="text" id="usr-name" placeholder="اسم المستخدم" required class="w-full p-2.5 border rounded-xl">
-                    <input type="password" id="usr-pass" placeholder="كلمة المرور" required class="w-full p-2.5 border rounded-xl">
-                    
-                    <label class="block font-bold">دور المستخدم (الصلاحية):</label>
-                    <select id="usr-role" class="w-full p-2.5 border rounded-xl bg-white">
-                        <option value="user">مستخدم عادي / مندوب</option>
+                <h3 class="text-sm font-bold">إضافة مستخدم جديد (مدير أو مندوب)</h3>
+                <form onsubmit="handleSaveUser(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <input type="text" id="usr-fullname" placeholder="الاسم الكامل" required class="p-2.5 border rounded-xl">
+                    <input type="text" id="usr-name" placeholder="اسم المستخدم للدخول" required class="p-2.5 border rounded-xl">
+                    <input type="password" id="usr-pass" placeholder="كلمة المرور الأولية" required class="p-2.5 border rounded-xl">
+                    <input type="tel" id="usr-phone" placeholder="رقم الجوال" class="p-2.5 border rounded-xl">
+                    <select id="usr-role" class="p-2.5 border rounded-xl bg-white sm:col-span-2">
+                        <option value="user">مندوب مبيعات / مستخدم عادي</option>
                         <option value="admin">مدير النظام (Admin)</option>
                     </select>
-
-                    <button type="submit" class="bg-emerald-600 text-white font-bold px-4 py-2.5 rounded-xl">حفظ المستخدم</button>
+                    <button type="submit" class="sm:col-span-2 bg-emerald-600 text-white font-bold py-2.5 rounded-xl">حفظ المستخدم</button>
                 </form>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <h4 class="font-bold text-sm mb-3">قائمة المستخدمين والمندوبين</h4>
+                <div id="users-list-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs"></div>
             </div>
         </section>
 
-        <!-- الإعدادات والمناطق (للمدير فقط) -->
-        <section id="tab-settings" class="tab-content admin-only hidden space-y-6">
-            <!-- ضبط فترة العمولات -->
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3 text-xs">
-                <h3 class="text-sm font-bold text-slate-800">إعدادات فترة العمولات</h3>
-                <form onsubmit="handleSaveSettings(event)" class="flex items-center gap-3 flex-wrap">
-                    <label class="font-bold">فترة استحقاق العمولة (بالأيام):</label>
-                    <input type="number" id="setting-period" placeholder="90" required class="p-2.5 border rounded-xl w-32">
-                    <button type="submit" class="bg-indigo-600 text-white font-bold px-4 py-2.5 rounded-xl">حفظ الفترة</button>
+        <!-- الإعدادات والمحاسبين -->
+        <section id="tab-settings" class="tab-content hidden space-y-6">
+            <!-- تغيير كلمة المرور الشخصية -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3 text-xs max-w-lg">
+                <h3 class="text-sm font-bold text-slate-800">تغيير كلمة المرور الخاصة بك</h3>
+                <form onsubmit="handleChangePassword(event)" class="space-y-3">
+                    <input type="password" id="change-old-pass" placeholder="كلمة المرور القديمة" required class="w-full p-2.5 border rounded-xl">
+                    <input type="password" id="change-new-pass" placeholder="كلمة المرور الجديدة" required class="w-full p-2.5 border rounded-xl">
+                    <button type="submit" class="bg-slate-800 text-white font-bold px-4 py-2.5 rounded-xl w-full">تحديث كلمة المرور</button>
                 </form>
             </div>
 
-            <!-- إدارة المناطق الجغرافية -->
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4 text-xs">
-                <h3 class="text-sm font-bold text-slate-800">إدارة المناطق الجغرافية</h3>
-                
-                <form onsubmit="handleAddRegion(event)" class="flex gap-2">
-                    <input type="text" id="reg-name" placeholder="اسم المنطقة الجديدة" required class="flex-1 p-2.5 border rounded-xl">
-                    <button type="submit" class="bg-slate-800 text-white font-bold px-4 py-2.5 rounded-xl">إضافة منطقة</button>
+            <!-- ضبط مهلة الفواتير (للمدير) -->
+            <div class="admin-only bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3 text-xs">
+                <h3 class="text-sm font-bold text-slate-800">تعديل المهلة الزمنيّة للفواتير (بالأيام)</h3>
+                <form onsubmit="handleSaveSettings(event)" class="flex items-center gap-3 flex-wrap">
+                    <label class="font-bold">مهلة الفاتورة المعلقة (افتراضي 30 يوم):</label>
+                    <input type="number" id="setting-period" placeholder="30" required class="p-2.5 border rounded-xl w-32">
+                    <button type="submit" class="bg-indigo-600 text-white font-bold px-4 py-2.5 rounded-xl">حفظ المهلة</button>
                 </form>
+            </div>
 
-                <div class="border rounded-xl overflow-hidden">
-                    <table class="w-full text-right text-xs">
-                        <thead class="bg-slate-50 font-bold border-b">
-                            <tr>
-                                <th class="p-3">اسم المنطقة</th>
-                                <th class="p-3 text-left">إجراءات</th>
-                            </tr>
-                        </thead>
-                        <tbody id="regions-table-body" class="divide-y divide-slate-100"></tbody>
-                    </table>
-                </div>
+            <!-- إدارة المحاسبين (للمدير) -->
+            <div class="admin-only bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4 text-xs">
+                <h3 class="text-sm font-bold text-slate-800">إدارة دليل المحاسبين للإشعار</h3>
+                <form onsubmit="handleAddAccountant(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input type="text" id="acc-name" placeholder="اسم المحاسب" required class="p-2.5 border rounded-xl">
+                    <input type="tel" id="acc-phone" placeholder="رقم الجوال (مع المفتاح)" required class="p-2.5 border rounded-xl">
+                    <button type="submit" class="bg-emerald-600 text-white font-bold px-4 py-2.5 rounded-xl">إضافة محاسب</button>
+                </form>
+                <div id="accountants-list" class="divide-y border rounded-xl overflow-hidden"></div>
             </div>
         </section>
 
     </main>
 
-    <!-- 4. جافا سكريبت الكامل للاتصال والعمليات -->
+    <!-- 4. جافا سكريبت للبرمجة المباشرة -->
     <script>
         const SUPABASE_URL = 'https://lyieimsifdynazgwqurn.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5aWVpbXNpZmR5bmF6Z3dxdXJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwODA2OTQsImV4cCI6MjEwMDY1NjY5NH0.sGiTYhUHwsZcYiLyB2enkvB01kJwaTZJ8YyHQD3HPEk';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let currentUser = null;
-        let regions = [], reps = [], customers = [], invoices = [];
-        let commissionLimitDays = 90;
+        let users = [], customers = [], invoices = [], accountants = [];
+        let commissionLimitDays = 30;
 
-        // 1. تسجيل الدخول والتحقق من الدور
+        // 1. تسجيل الدخول
         async function handleLogin(e) {
             if (e) e.preventDefault();
             const uInput = document.getElementById('login-user').value.trim();
@@ -248,11 +253,10 @@
 
                 if (error || !data) {
                     alert('اسم المستخدم أو كلمة المرور غير صحيحة');
-                    console.error("Login Error:", error);
                 } else {
                     currentUser = data;
                     document.getElementById('login-modal').classList.add('hidden');
-                    document.getElementById('user-display-name').innerText = currentUser.username;
+                    document.getElementById('user-display-name').innerText = currentUser.full_name || currentUser.username;
                     document.getElementById('user-display-role').innerText = "الدور: " + (currentUser.role === 'admin' ? 'مدير النظام' : 'مندوب مبيعات');
 
                     applyRolePermissions();
@@ -260,8 +264,7 @@
                     await loadAllDataFromSupabase();
                 }
             } catch (err) {
-                console.error("Critical Login Catch:", err);
-                alert("حدث خطأ أثناء الاتصال بالخادم.");
+                alert("حدث خطأ أثناء الدخول للشبكة.");
             }
         }
 
@@ -270,10 +273,10 @@
             const scopeText = document.getElementById('system-scope-text');
             
             if (isAdmin) {
-                scopeText.innerText = 'عرض كافة بيانات النظام (وضع المدير)';
+                scopeText.innerText = 'عرض وتتبع جميع المندوبين والعملاء';
                 document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
             } else {
-                scopeText.innerText = 'عرض البيانات الخاصة بك فقط (وضع المندوب)';
+                scopeText.innerText = 'تتبع عملائك وفواتيرك الخاصة فقط';
                 document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
             }
         }
@@ -281,159 +284,163 @@
         function logout() {
             currentUser = null;
             document.getElementById('login-modal').classList.remove('hidden');
-            switchTab('dashboard');
+            switchTab('invoices');
         }
 
-        // 2. تحميل الإعدادات والفترة
+        // 2. تحميل البيانات
         async function loadSettings() {
             try {
                 const { data } = await _supabase.from('system_settings').select('*').single();
                 if (data) {
-                    commissionLimitDays = data.commission_days_limit || 90;
+                    commissionLimitDays = data.commission_days_limit || 30;
                     if(document.getElementById('setting-period')) {
                         document.getElementById('setting-period').value = commissionLimitDays;
                     }
                 }
             } catch (e) {
-                console.warn("إعدادات الفترة الافتراضية 90 يوماً");
+                console.warn("استخدام مهلة افتراضية 30 يوم");
             }
         }
 
-        async function handleSaveSettings(e) {
-            if (e) e.preventDefault();
-            const period = parseInt(document.getElementById('setting-period').value);
-            if (!period) return alert("يرجى إدخال عدد أيام صحيح");
-
-            const { error } = await _supabase.from('system_settings').upsert({ id: 1, commission_days_limit: period });
-            if (error) {
-                alert("خطأ أثناء حفظ الإعدادات: " + error.message);
-            } else {
-                alert("تم حفظ فترة العمولات بنجاح!");
-                commissionLimitDays = period;
-                renderInvoices();
-            }
-        }
-
-        // 3. جلب البيانات وتصفيتها بحسب المستخدم التسجيل (مدير أم مندوب)
         async function loadAllDataFromSupabase() {
-            try {
-                const isAdmin = currentUser.role === 'admin';
-                const repId = currentUser.rep_id;
+            const isAdmin = currentUser.role === 'admin';
 
-                // جلب المناطق والمندوبين
-                const { data: regData } = await _supabase.from('regions').select('*');
-                regions = regData || [];
+            // جلب المستخدمين والمحاسبين
+            const { data: uData } = await _supabase.from('app_users').select('*');
+            users = uData || [];
 
-                const { data: repData } = await _supabase.from('reps').select('*');
-                reps = repData || [];
+            const { data: accData } = await _supabase.from('accountants').select('*');
+            accountants = accData || [];
 
-                // جلب العملاء وتصفيتهم للمندوب
-                let custQuery = _supabase.from('customers').select('*');
-                if (!isAdmin && repId) {
-                    custQuery = custQuery.eq('rep_id', repId);
-                }
-                const { data: custData } = await custQuery;
-                customers = custData || [];
-
-                // جلب الفواتير المتاحة للعملاء المصرح برؤيتهم
-                const custIds = customers.map(c => c.id);
-                let invData = [];
-                if (custIds.length > 0 || isAdmin) {
-                    let invQuery = _supabase.from('invoices').select('*');
-                    if (!isAdmin) {
-                        invQuery = invQuery.in('customer_id', custIds);
-                    }
-                    const res = await invQuery;
-                    invData = res.data || [];
-                }
-                invoices = invData;
-
-                renderAll();
-            } catch (err) {
-                console.error("Error loading data:", err);
+            // جلب العملاء الفلترين للمندوب أو المدير
+            let custQuery = _supabase.from('customers').select('*');
+            if (!isAdmin) {
+                custQuery = custQuery.eq('rep_user_id', currentUser.id);
             }
+            const { data: cData } = await custQuery;
+            customers = cData || [];
+
+            // جلب الفواتير
+            const custIds = customers.map(c => c.id);
+            let invData = [];
+            if (custIds.length > 0 || isAdmin) {
+                let invQuery = _supabase.from('invoices').select('*');
+                if (!isAdmin) {
+                    invQuery = invQuery.in('customer_id', custIds);
+                }
+                const res = await invQuery;
+                invData = res.data || [];
+            }
+            invoices = invData;
+
+            renderAll();
         }
 
         function renderAll() {
-            renderRegionsTable();
             renderDropdowns();
             renderInvoices();
             renderCustomers();
+            renderUsers();
+            renderAccountants();
         }
 
-        // 4. إضافة المندوب + إنشاء حسابه تلقائياً
-        async function handleAddRep(e) {
-            if (e) e.preventDefault();
-            const name = document.getElementById('rep-name').value.trim();
-            const phone = document.getElementById('rep-phone').value.trim();
+        // 3. عرض وتطبيق شاشة الفواتير والفلترة
+        function renderInvoices() {
+            const body = document.getElementById('invoices-table-body');
+            const repFilter = document.getElementById('filter-rep').value;
+            const statusFilter = document.getElementById('filter-status').value;
+            const today = new Date();
 
-            if (!name || !phone) return alert("يرجى إدخال اسم المندوب ورقم الجوال");
+            let filtered = invoices.filter(inv => {
+                const cust = customers.find(c => c.id == inv.customer_id) || {};
+                
+                // فلتر المندوب
+                if (repFilter !== 'all' && cust.rep_user_id != repFilter) return false;
 
-            // أ) إضافة المندوب في جدول المندوبين
-            const { data: repData, error: repErr } = await _supabase
-                .from('reps')
-                .insert([{ name, phone }])
-                .select()
-                .single();
+                // احتساب مهلة الفاتورة
+                const invDate = new Date(inv.invoice_date);
+                const diffDays = Math.floor((today - invDate) / (1000 * 60 * 60 * 24));
+                const isExpired = diffDays > commissionLimitDays;
 
-            if (repErr) {
-                alert("حدث خطأ أثناء إضافة المندوب (قد يكون رقم الجوال مكرراً): " + repErr.message);
-                return;
-            }
+                // فلتر الحالة
+                if (statusFilter === 'paid' && inv.status !== 'paid') return false;
+                if (statusFilter === 'active' && (inv.status === 'paid' || isExpired)) return false;
+                if (statusFilter === 'expired' && (inv.status === 'paid' || !isExpired)) return false;
 
-            // ب) إنشاء حساب مستخدم للمندوب تلقائياً بكلمة مرور افتراضية 123456
-            const { error: userErr } = await _supabase.from('app_users').insert([{
-                username: phone,
-                password: '123456',
-                role: 'user',
-                rep_id: repData.id
-            }]);
+                return true;
+            });
 
-            if (userErr) {
-                alert("تم إضافة المندوب لكن حدث خطأ أثناء إيقاف حسابه تلقائياً: " + userErr.message);
-            } else {
-                alert(`تم إضافة المندوب بنجاح!\nبيانات الدخول للمندوب:\nاسم المستخدم: ${phone}\nكلمة المرور الافتراضية: 123456`);
-                document.getElementById('rep-name').value = '';
-                document.getElementById('rep-phone').value = '';
-                await loadAllDataFromSupabase();
+            document.getElementById('inv-count-badge').innerText = `عدد: ${filtered.length}`;
+
+            body.innerHTML = filtered.map(inv => {
+                const cust = customers.find(c => c.id == inv.customer_id) || {};
+                const repUser = users.find(u => u.id == cust.rep_user_id) || {};
+                
+                const invDate = new Date(inv.invoice_date);
+                const diffDays = Math.floor((today - invDate) / (1000 * 60 * 60 * 24));
+                const remainingDays = commissionLimitDays - diffDays;
+                const isPaid = inv.status === 'paid';
+                const isExpired = diffDays > commissionLimitDays && !isPaid;
+
+                let statusBadge = '';
+                if (isPaid) {
+                    statusBadge = `<span class="bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-[10px] font-bold">تم السداد</span>`;
+                } else if (isExpired) {
+                    statusBadge = `<span class="bg-rose-100 text-rose-800 px-2 py-1 rounded text-[10px] font-bold">معلقة / تجاوزت ${commissionLimitDays} يوم</span>`;
+                } else {
+                    statusBadge = `<span class="bg-amber-100 text-amber-800 px-2 py-1 rounded text-[10px] font-bold">متبقي ${remainingDays} يوم</span>`;
+                }
+
+                // نص واتساب العميل
+                const custMsg = encodeURIComponent(`أهلاً بك ${cust.name || ''}، نود تذكيركم بالفاتورة رقم (${inv.invoice_number}) بتاريخ ${inv.invoice_date} بمبلغ (${inv.amount}). المتبقي على مهلة التواصل: ${remainingDays > 0 ? remainingDays : 0} أيام.`);
+                const custWhatsappUrl = `https://wa.me/${cust.phone}?text=${custMsg}`;
+
+                return `
+                    <tr>
+                        <td class="p-3 font-bold">${inv.invoice_number}</td>
+                        <td class="p-3">${cust.name || '-'}</td>
+                        <td class="p-3">${repUser.full_name || repUser.username || '-'}</td>
+                        <td class="p-3">${inv.invoice_date}</td>
+                        <td class="p-3 font-extrabold text-indigo-900">${Number(inv.amount).toLocaleString()}</td>
+                        <td class="p-3">${statusBadge}</td>
+                        <td class="p-3 text-center no-print space-x-1 space-x-reverse">
+                            <a href="${custWhatsappUrl}" target="_blank" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-2.5 py-1 rounded text-[11px]">
+                                📲 تذكير العميل
+                            </a>
+                            ${!isPaid ? `
+                                <button onclick="markAsPaid(${inv.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-2.5 py-1 rounded text-[11px]">
+                                    ✔ تم السداد
+                                </button>
+                            ` : `
+                                <button onclick="sendToAccountant('${inv.invoice_number}', '${cust.name}', '${inv.amount}')" class="bg-slate-700 hover:bg-slate-800 text-white font-bold px-2.5 py-1 rounded text-[11px]">
+                                    📩 إرسال للمحاسب
+                                </button>
+                            `}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 4. تسديد الفواتير والإرسال للمحاسب
+        async function markAsPaid(invId) {
+            if (confirm("هل تريد تأكيد سداد هذه الفاتورة؟")) {
+                const { error } = await _supabase.from('invoices').update({ status: 'paid' }).eq('id', invId);
+                if (error) alert("تعذر الاعتماد: " + error.message);
+                else await loadAllDataFromSupabase();
             }
         }
 
-        // 5. إضافة العملاء (تحديد المندوب تلقائياً إذا كان المسجل مندوب)
-        async function handleAddCustomer(e) {
-            if (e) e.preventDefault();
-            const name = document.getElementById('cust-name').value.trim();
-            const phone = document.getElementById('cust-phone').value.trim();
-            const region_id = document.getElementById('cust-region').value;
-            
-            const isAdmin = currentUser.role === 'admin';
-            let rep_id = document.getElementById('cust-rep').value;
+        function sendToAccountant(invNum, custName, amount) {
+            const accSelect = document.getElementById('accountant-select');
+            const accPhone = accSelect.value;
+            if (!accPhone) return alert("يرجى اختيار المحاسب أولاً من القائمة فوق الجدول!");
 
-            // إذا كان المسجل مندوب عادي، ربط العميل به تلقائياً
-            if (!isAdmin && currentUser.rep_id) {
-                rep_id = currentUser.rep_id;
-            }
-
-            if (!name) return alert("يرجى إدخال اسم العميل");
-
-            const { data, error } = await _supabase.from('customers').insert([{ 
-                name, 
-                phone, 
-                region_id: region_id ? parseInt(region_id) : null, 
-                rep_id: rep_id ? parseInt(rep_id) : null 
-            }]);
-
-            if (error) {
-                alert("حدث خطأ أثناء إضافة العميل: " + error.message);
-            } else {
-                alert("تم إضافة العميل بنجاح!");
-                document.getElementById('cust-name').value = '';
-                document.getElementById('cust-phone').value = '';
-                await loadAllDataFromSupabase();
-            }
+            const msg = encodeURIComponent(`عزيزي المحاسب، تم سداد الفاتورة رقم (${invNum}) للعميل (${custName}) بمبلغ (${amount}). نرجو اعتمادها لديك.`);
+            window.open(`https://wa.me/${accPhone}?text=${msg}`, '_blank');
         }
 
-        // 6. إضافة الفواتير
+        // 5. إضافة الأوامر (فواتير، عملاء، مستخدمين، إعدادات)
         async function handleAddInvoice(e) {
             if (e) e.preventDefault();
             const inv_num = document.getElementById('inv-num').value.trim();
@@ -441,186 +448,164 @@
             const amount = document.getElementById('inv-amount').value;
             const inv_date = document.getElementById('inv-date').value;
 
-            if (!inv_num || !amount || !cust_id) return alert("يرجى تعبئة كافة الحقول المطلوبة للفاتورة");
-
-            const { data, error } = await _supabase.from('invoices').insert([{ 
-                invoice_number: inv_num, 
-                customer_id: parseInt(cust_id), 
-                amount: parseFloat(amount), 
-                invoice_date: inv_date 
+            const { error } = await _supabase.from('invoices').insert([{ 
+                invoice_number: inv_num, customer_id: parseInt(cust_id), amount: parseFloat(amount), invoice_date: inv_date, status: 'pending' 
             }]);
 
-            if (error) {
-                alert("حدث خطأ أثناء إضافة الفاتورة: " + error.message);
-            } else {
-                alert("تم إدخال الفاتورة بنجاح!");
+            if (error) alert("خطأ في حفظ الفاتورة: " + error.message);
+            else {
+                alert("تم إضافة الفاتورة بنجاح!");
                 document.getElementById('inv-num').value = '';
                 document.getElementById('inv-amount').value = '';
                 await loadAllDataFromSupabase();
             }
         }
 
-        // 7. إدارة المستخدمين (للمدير)
-        async function handleSaveUser(e) {
+        async function handleAddCustomer(e) {
             if (e) e.preventDefault();
-            const u = document.getElementById('usr-name').value.trim();
-            const p = document.getElementById('usr-pass').value.trim();
-            const role = document.getElementById('usr-role').value;
+            const name = document.getElementById('cust-name').value.trim();
+            const phone = document.getElementById('cust-phone').value.trim();
+            const region_id = document.getElementById('cust-region').value;
+            let rep_user_id = document.getElementById('cust-rep').value;
 
-            if (!u || !p) return alert("يرجى تعبئة البيانات كاملة");
+            if (currentUser.role !== 'admin') rep_user_id = currentUser.id;
 
-            const { data, error } = await _supabase.from('app_users').insert([{ username: u, password: p, role: role }]);
-            if (error) alert("تعذر إدخال المستخدم: " + error.message);
+            const { error } = await _supabase.from('customers').insert([{ 
+                name, phone, region_id: region_id ? parseInt(region_id) : null, rep_user_id: rep_user_id ? parseInt(rep_user_id) : null 
+            }]);
+
+            if (error) alert("خطأ في حفظ العميل: " + error.message);
             else {
-                alert("تم حفظ المستخدم بنجاح!");
-                document.getElementById('usr-name').value = '';
-                document.getElementById('usr-pass').value = '';
-            }
-        }
-
-        // 8. إدارة المناطق
-        async function handleAddRegion(e) {
-            if (e) e.preventDefault();
-            const name = document.getElementById('reg-name').value.trim();
-            if (!name) return alert("يرجى إدخال اسم المنطقة");
-
-            const { data, error } = await _supabase.from('regions').insert([{ name }]);
-            if (error) {
-                alert("حدث خطأ أثناء إدخال المنطقة: " + error.message);
-            } else {
-                alert("تم إضافة المنطقة بنجاح!");
-                document.getElementById('reg-name').value = '';
+                alert("تم تسجيل العميل بنجاح!");
+                document.getElementById('cust-name').value = '';
+                document.getElementById('cust-phone').value = '';
                 await loadAllDataFromSupabase();
             }
         }
 
-        async function editRegion(id, currentName) {
-            const newName = prompt("أدخل الاسم الجديد للمنطقة:", currentName);
-            if (newName && newName.trim() !== "") {
-                const { error } = await _supabase.from('regions').update({ name: newName.trim() }).eq('id', id);
-                if (error) alert("تعذر تعديل المنطقة: " + error.message);
-                else await loadAllDataFromSupabase();
+        async function handleSaveUser(e) {
+            if (e) e.preventDefault();
+            const full_name = document.getElementById('usr-fullname').value.trim();
+            const username = document.getElementById('usr-name').value.trim();
+            const password = document.getElementById('usr-pass').value.trim();
+            const phone = document.getElementById('usr-phone').value.trim();
+            const role = document.getElementById('usr-role').value;
+
+            const { error } = await _supabase.from('app_users').insert([{ full_name, username, password, phone, role }]);
+            if (error) alert("تعذر حفظ المستخدم: " + error.message);
+            else {
+                alert("تم إضافة المستخدم بنجاح!");
+                document.getElementById('usr-fullname').value = '';
+                document.getElementById('usr-name').value = '';
+                document.getElementById('usr-pass').value = '';
+                await loadAllDataFromSupabase();
             }
         }
 
-        async function deleteRegion(id) {
-            if (confirm("هل أنت تأكد من حذف هذه المنطقة؟")) {
-                const { error } = await _supabase.from('regions').delete().eq('id', id);
-                if (error) alert("تعذر حذف المنطقة: " + error.message);
-                else await loadAllDataFromSupabase();
+        async function handleChangePassword(e) {
+            if (e) e.preventDefault();
+            const oldPass = document.getElementById('change-old-pass').value;
+            const newPass = document.getElementById('change-new-pass').value;
+
+            if (oldPass !== currentUser.password) return alert("كلمة المرور القديمة غير صحيحة!");
+
+            const { error } = await _supabase.from('app_users').update({ password: newPass }).eq('id', currentUser.id);
+            if (error) alert("تعذر التغيير: " + error.message);
+            else {
+                alert("تم تغيير كلمة المرور بنجاح!");
+                currentUser.password = newPass;
+                document.getElementById('change-old-pass').value = '';
+                document.getElementById('change-new-pass').value = '';
             }
         }
 
-        // 9. عرض البيانات وتحديث القوائم المنسدلة
+        async function handleSaveSettings(e) {
+            if (e) e.preventDefault();
+            const period = parseInt(document.getElementById('setting-period').value);
+            const { error } = await _supabase.from('system_settings').upsert({ id: 1, commission_days_limit: period });
+            if (error) alert("خطأ الحفظ: " + error.message);
+            else {
+                alert("تم تحديث المهلة بنجاح!");
+                commissionLimitDays = period;
+                renderInvoices();
+            }
+        }
+
+        async function handleAddAccountant(e) {
+            if (e) e.preventDefault();
+            const name = document.getElementById('acc-name').value.trim();
+            const phone = document.getElementById('acc-phone').value.trim();
+
+            const { error } = await _supabase.from('accountants').insert([{ name, phone }]);
+            if (error) alert("خطأ الإضافة: " + error.message);
+            else {
+                alert("تم إضافة المحاسب بنجاح!");
+                document.getElementById('acc-name').value = '';
+                document.getElementById('acc-phone').value = '';
+                await loadAllDataFromSupabase();
+            }
+        }
+
+        // 6. تجميع عناصر العرض
         function renderDropdowns() {
             const custSelect = document.getElementById('inv-cust');
-            const regSelect = document.getElementById('cust-region');
-            const repSelect = document.getElementById('cust-rep');
+            const custRepSelect = document.getElementById('cust-rep');
+            const filterRepSelect = document.getElementById('filter-rep');
+            const accSelect = document.getElementById('accountant-select');
 
-            if(custSelect) {
-                custSelect.innerHTML = '<option value="">-- اختر العميل --</option>' + 
-                    customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            }
-            if(regSelect) {
-                regSelect.innerHTML = '<option value="">-- اختر المنطقة --</option>' + 
-                    regions.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-            }
-            if(repSelect) {
-                // إخفاء خيار المندوب إذا كان المسجل مندوب عادي
-                if (currentUser && currentUser.role !== 'admin') {
-                    repSelect.classList.add('hidden');
-                } else {
-                    repSelect.classList.remove('hidden');
-                    repSelect.innerHTML = '<option value="">-- اختر المندوب --</option>' + 
-                        reps.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-                }
-            }
-        }
+            custSelect.innerHTML = '<option value="">-- اختر العميل --</option>' + customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 
-        function renderRegionsTable() {
-            const body = document.getElementById('regions-table-body');
-            if(!body) return;
-            body.innerHTML = regions.map(r => `
-                <tr>
-                    <td class="p-3 font-bold">${r.name}</td>
-                    <td class="p-3 text-left space-x-2 space-x-reverse">
-                        <button onclick="editRegion(${r.id}, '${r.name}')" class="text-indigo-600 font-bold hover:underline">تعديل</button>
-                        <button onclick="deleteRegion(${r.id})" class="text-rose-600 font-bold hover:underline">حذف</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function renderInvoices() {
-            const allBody = document.getElementById('all-invoices-body');
-            const countElem = document.getElementById('stat-total-count');
-            const validCommElem = document.getElementById('stat-valid-comm');
-            const lostCommElem = document.getElementById('stat-lost-comm');
-            const totalCommElem = document.getElementById('stat-total-comm');
+            const repUsers = users.filter(u => u.role === 'user' || u.role === 'admin');
             
-            let commTotal = 0;
-            let validCommTotal = 0;
-            let lostCommTotal = 0;
-
-            if(countElem) countElem.innerText = invoices.length;
-
-            if(allBody) {
-                const today = new Date();
-                allBody.innerHTML = invoices.map(inv => {
-                    const cust = customers.find(c => c.id == inv.customer_id) || {};
-                    const comm = (Number(inv.amount || 0) * 0.05);
-                    commTotal += comm;
-
-                    let isExpired = false;
-                    if(inv.invoice_date) {
-                        const invDate = new Date(inv.invoice_date);
-                        const diffTime = Math.abs(today - invDate);
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                        if(diffDays > commissionLimitDays) isExpired = true;
-                    }
-
-                    if(isExpired) lostCommTotal += comm;
-                    else validCommTotal += comm;
-
-                    return `
-                        <tr>
-                            <td class="p-3 font-bold">${inv.invoice_number || inv.id}</td>
-                            <td class="p-3">${cust.name || '-'}</td>
-                            <td class="p-3">${inv.invoice_date || '-'}</td>
-                            <td class="p-3 font-extrabold">${Number(inv.amount || 0).toLocaleString()}</td>
-                            <td class="p-3 text-emerald-600 font-bold">${comm.toLocaleString()}</td>
-                            <td class="p-3">
-                                ${isExpired 
-                                    ? `<span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded text-[10px]">منتهية (${commissionLimitDays} يوم)</span>` 
-                                    : `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px]">سارية ومستحقة</span>`}
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
+            if (currentUser.role === 'admin') {
+                custRepSelect.classList.remove('hidden');
+                custRepSelect.innerHTML = '<option value="">-- اختر المندوب --</option>' + repUsers.map(u => `<option value="${u.id}">${u.full_name || u.username}</option>`).join('');
+                
+                filterRepSelect.disabled = false;
+                filterRepSelect.innerHTML = '<option value="all">جميع المندوبين</option>' + repUsers.map(u => `<option value="${u.id}">${u.full_name || u.username}</option>`).join('');
+            } else {
+                custRepSelect.classList.add('hidden');
+                filterRepSelect.disabled = true;
+                filterRepSelect.innerHTML = `<option value="${currentUser.id}">${currentUser.full_name || currentUser.username}</option>`;
             }
 
-            if(validCommElem) validCommElem.innerText = validCommTotal.toLocaleString();
-            if(lostCommElem) lostCommElem.innerText = lostCommTotal.toLocaleString();
-            if(totalCommElem) totalCommElem.innerText = commTotal.toLocaleString();
+            accSelect.innerHTML = '<option value="">-- اختر المحاسب للإشعار --</option>' + accountants.map(a => `<option value="${a.phone}">${a.name} (${a.phone})</option>`).join('');
         }
 
         function renderCustomers() {
             const grid = document.getElementById('customers-grid');
-            if(!grid) return;
             grid.innerHTML = customers.map(c => {
-                const reg = regions.find(r => r.id == c.region_id);
-                const rep = reps.find(rp => rp.id == c.rep_id);
+                const rep = users.find(u => u.id == c.rep_user_id);
                 return `
                     <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
                         <p class="font-bold text-slate-800">${c.name}</p>
-                        <p class="text-slate-500 mt-1">الجوال: ${c.phone || '-'}</p>
-                        <div class="mt-2 text-[10px] flex justify-between text-slate-400">
-                            <span>المنطقة: ${reg ? reg.name : '-'}</span>
-                            <span>المندوب: ${rep ? rep.name : '-'}</span>
-                        </div>
+                        <p class="text-slate-500 mt-1">الواتساب: ${c.phone}</p>
+                        <p class="text-[10px] text-indigo-600 mt-2 font-bold">المندوب: ${rep ? (rep.full_name || rep.username) : '-'}</p>
                     </div>
                 `;
             }).join('');
+        }
+
+        function renderUsers() {
+            const grid = document.getElementById('users-list-grid');
+            grid.innerHTML = users.map(u => `
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <p class="font-bold text-slate-800">${u.full_name || u.username}</p>
+                    <p class="text-slate-500 mt-1">اسم المستخدم: ${u.username}</p>
+                    <p class="text-slate-500">كلمة المرور: ${u.password}</p>
+                    <span class="inline-block mt-2 text-[10px] bg-slate-200 px-2 py-0.5 rounded font-bold">${u.role === 'admin' ? 'مدير' : 'مندوب'}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderAccountants() {
+            const list = document.getElementById('accountants-list');
+            list.innerHTML = accountants.map(a => `
+                <div class="p-3 bg-slate-50 flex justify-between items-center text-xs">
+                    <span class="font-bold">${a.name}</span>
+                    <span class="text-slate-500">${a.phone}</span>
+                </div>
+            `).join('');
         }
 
         function switchTab(tabId) {
