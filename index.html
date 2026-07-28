@@ -57,7 +57,7 @@
             <div class="flex items-center gap-3">
                 <div class="text-left bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700">
                     <p id="user-display-name" class="text-xs font-bold text-indigo-300">غير مسجل</p>
-                    <p id="user-display-regions" class="text-[10px] text-slate-400">المناطق: الكل</p>
+                    <p id="user-display-role" class="text-[10px] text-slate-400">الدور: -</p>
                 </div>
                 <button onclick="logout()" class="text-xs bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/20 px-3 py-2 rounded-xl font-bold transition">
                     خروج
@@ -89,11 +89,11 @@
                     <h3 id="stat-valid-comm" class="text-3xl font-extrabold text-emerald-700 mt-2">0</h3>
                 </div>
                 <div class="bg-rose-50/60 p-5 rounded-2xl shadow-sm border border-rose-100">
-                    <span class="text-xs font-bold text-rose-600">عمولات ملغاة</span>
+                    <span class="text-xs font-bold text-rose-600">عمولات منتهية المهلة</span>
                     <h3 id="stat-lost-comm" class="text-3xl font-extrabold text-rose-700 mt-2">0</h3>
                 </div>
                 <div class="bg-amber-50/60 p-5 rounded-2xl shadow-sm border border-amber-100">
-                    <span class="text-xs font-bold text-amber-600">مجموع العمولات المتوقعة</span>
+                    <span class="text-xs font-bold text-amber-600">مجموع العمولات الكلي</span>
                     <h3 id="stat-total-comm" class="text-3xl font-extrabold text-amber-700 mt-2">0</h3>
                 </div>
             </div>
@@ -123,7 +123,7 @@
                                 <th class="p-3">التاريخ</th>
                                 <th class="p-3">المبلغ الصافي</th>
                                 <th class="p-3">العمولة (5%)</th>
-                                <th class="p-3">الحالة</th>
+                                <th class="p-3">حالة الاستحقاق</th>
                             </tr>
                         </thead>
                         <tbody id="all-invoices-body" class="divide-y divide-slate-100"></tbody>
@@ -166,11 +166,18 @@
 
         <!-- المستخدمين والصلاحيات -->
         <section id="tab-users" class="tab-content hidden space-y-6">
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                <h3 class="text-sm font-bold mb-4">إضافة مستخدم جديد لقاعدة البيانات</h3>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                <h3 class="text-sm font-bold">إضافة مستخدم جديد لقاعدة البيانات</h3>
                 <form onsubmit="handleSaveUser(event)" class="space-y-3 text-xs max-w-xl">
                     <input type="text" id="usr-name" placeholder="اسم المستخدم" required class="w-full p-2.5 border rounded-xl">
                     <input type="password" id="usr-pass" placeholder="كلمة المرور" required class="w-full p-2.5 border rounded-xl">
+                    
+                    <label class="block font-bold">دور المستخدم (الصلاحية):</label>
+                    <select id="usr-role" class="w-full p-2.5 border rounded-xl bg-white">
+                        <option value="user">مخدم / مندوب (مستخدم عادي)</option>
+                        <option value="admin">مدير النظام (Admin)</option>
+                    </select>
+
                     <button type="submit" class="bg-emerald-600 text-white font-bold px-4 py-2.5 rounded-xl">حفظ المستخدم</button>
                 </form>
             </div>
@@ -178,6 +185,17 @@
 
         <!-- الإعدادات والمناطق -->
         <section id="tab-settings" class="tab-content hidden space-y-6">
+            <!-- ضبط فترة العمولات -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3 text-xs">
+                <h3 class="text-sm font-bold text-slate-800">إعدادات فترة العمولات</h3>
+                <form onsubmit="handleSaveSettings(event)" class="flex items-center gap-3 flex-wrap">
+                    <label class="font-bold">فترة استحقاق العمولة (بالأيام):</label>
+                    <input type="number" id="setting-period" placeholder="90" required class="p-2.5 border rounded-xl w-32">
+                    <button type="submit" class="bg-indigo-600 text-white font-bold px-4 py-2.5 rounded-xl">حفظ الفترة</button>
+                </form>
+            </div>
+
+            <!-- إدارة المناطق الجغرافية -->
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4 text-xs">
                 <h3 class="text-sm font-bold text-slate-800">إدارة المناطق الجغرافية</h3>
                 
@@ -204,15 +222,15 @@
 
     <!-- 4. جافا سكريبت الكامل للاتصال والعمليات -->
     <script>
-        // إعدادات الربط الصحيحة بالكامل
         const SUPABASE_URL = 'https://lyieimsifdynazgwqurn.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5aWVpbXNpZmR5bmF6Z3dxdXJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwODA2OTQsImV4cCI6MjEwMDY1NjY5NH0.sGiTYhUHwsZcYiLyB2enkvB01kJwaTZJ8YyHQD3HPEk';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let currentUser = null;
         let regions = [], reps = [], customers = [], invoices = [];
+        let commissionLimitDays = 90;
 
-        // 1. عملية تسجيل الدخول
+        // 1. تسجيل الدخول
         async function handleLogin(e) {
             if (e) e.preventDefault();
             const uInput = document.getElementById('login-user').value.trim();
@@ -227,17 +245,19 @@
                     .single();
 
                 if (error || !data) {
-                    alert('اسم المستخدم أو كلمة المرور غير صحيحة، أو لم يتم إعطاء التصاريح لجدول app_users.');
+                    alert('اسم المستخدم أو كلمة المرور غير صحيحة');
                     console.error("Login Error:", error);
                 } else {
                     currentUser = data;
                     document.getElementById('login-modal').classList.add('hidden');
                     document.getElementById('user-display-name').innerText = currentUser.username;
+                    document.getElementById('user-display-role').innerText = "الدور: " + (currentUser.role === 'admin' ? 'مدير' : 'مستخدم');
+                    await loadSettings();
                     await loadAllDataFromSupabase();
                 }
             } catch (err) {
                 console.error("Critical Login Catch:", err);
-                alert("حدث خطأ أثناء الاتصال بالخادم.");
+                alert("حدث خطأ أثناء الاتصال الخادم.");
             }
         }
 
@@ -246,28 +266,54 @@
             document.getElementById('login-modal').classList.remove('hidden');
         }
 
-        // 2. دالة جلب كافة البيانات المزامنة من قاعدة البيانات
+        // 2. تحميل الإعدادات والفترة
+        async function loadSettings() {
+            try {
+                const { data } = await _supabase.from('system_settings').select('*').single();
+                if (data) {
+                    commissionLimitDays = data.commission_days_limit || 90;
+                    if(document.getElementById('setting-period')) {
+                        document.getElementById('setting-period').value = commissionLimitDays;
+                    }
+                }
+            } catch (e) {
+                console.warn("إعدادات الفترة الافتراضية 90 يوماً");
+            }
+        }
+
+        async function handleSaveSettings(e) {
+            if (e) e.preventDefault();
+            const period = parseInt(document.getElementById('setting-period').value);
+            if (!period) return alert("يرجى إدخال عدد أيام صحيح");
+
+            const { error } = await _supabase.from('system_settings').upsert({ id: 1, commission_days_limit: period });
+            if (error) {
+                alert("خطأ أثناء حفظ الإعدادات: " + error.message);
+            } else {
+                alert("تم حفظ فترة العمولات بنجاح!");
+                commissionLimitDays = period;
+                renderInvoices();
+            }
+        }
+
+        // 3. دالة جلب البيانات من قاعدة البيانات
         async function loadAllDataFromSupabase() {
             try {
-                // جلب المناطق
                 const { data: regData } = await _supabase.from('regions').select('*');
                 regions = regData || [];
 
-                // جلب المندوبين
                 const { data: repData } = await _supabase.from('reps').select('*');
                 reps = repData || [];
 
-                // جلب العملاء
                 const { data: custData } = await _supabase.from('customers').select('*');
                 customers = custData || [];
 
-                // جلب الفواتير
                 const { data: invData } = await _supabase.from('invoices').select('*');
                 invoices = invData || [];
 
                 renderAll();
             } catch (err) {
-                console.error("Error loading data from Supabase:", err);
+                console.error("Error loading data:", err);
             }
         }
 
@@ -278,7 +324,7 @@
             renderCustomers();
         }
 
-        // 3. إضافة وتوفير المندوبين
+        // 4. إضافة المندوبين
         async function handleAddRep(e) {
             if (e) e.preventDefault();
             const name = document.getElementById('rep-name').value.trim();
@@ -297,7 +343,7 @@
             }
         }
 
-        // 4. إضافة وتوفير العملاء
+        // 5. إضافة العملاء
         async function handleAddCustomer(e) {
             if (e) e.preventDefault();
             const name = document.getElementById('cust-name').value.trim();
@@ -324,7 +370,7 @@
             }
         }
 
-        // 5. إضافة وتوفير الفواتير
+        // 6. إضافة الفواتير
         async function handleAddInvoice(e) {
             if (e) e.preventDefault();
             const inv_num = document.getElementById('inv-num').value.trim();
@@ -351,7 +397,25 @@
             }
         }
 
-        // 6. إضافة وتوفير المناطق
+        // 7. إدارة المستخدمين وإسناد الأدوار
+        async function handleSaveUser(e) {
+            if (e) e.preventDefault();
+            const u = document.getElementById('usr-name').value.trim();
+            const p = document.getElementById('usr-pass').value.trim();
+            const role = document.getElementById('usr-role').value;
+
+            if (!u || !p) return alert("يرجى تعبئة البيانات كاملة");
+
+            const { data, error } = await _supabase.from('app_users').insert([{ username: u, password: p, role: role }]);
+            if (error) alert("تعذر إدخال المستخدم: " + error.message);
+            else {
+                alert("تم حفظ المستخدم بنجاح!");
+                document.getElementById('usr-name').value = '';
+                document.getElementById('usr-pass').value = '';
+            }
+        }
+
+        // 8. إدارة المناطق
         async function handleAddRegion(e) {
             if (e) e.preventDefault();
             const name = document.getElementById('reg-name').value.trim();
@@ -384,24 +448,7 @@
             }
         }
 
-        // 7. حفظ مستخدم جديد
-        async function handleSaveUser(e) {
-            if (e) e.preventDefault();
-            const u = document.getElementById('usr-name').value.trim();
-            const p = document.getElementById('usr-pass').value.trim();
-
-            if (!u || !p) return alert("يرجى تعبئة البيانات كاملة");
-
-            const { data, error } = await _supabase.from('app_users').insert([{ username: u, password: p }]);
-            if (error) alert("تعذر إدخال المستخدم: " + error.message);
-            else {
-                alert("تم حفظ المستخدم بنجاح!");
-                document.getElementById('usr-name').value = '';
-                document.getElementById('usr-pass').value = '';
-            }
-        }
-
-        // 8. رسم وعرض القوائم والجداول
+        // 9. عرض وإسقاط الجداول والقوائم
         function renderDropdowns() {
             const custSelect = document.getElementById('inv-cust');
             const regSelect = document.getElementById('cust-region');
@@ -438,16 +485,35 @@
         function renderInvoices() {
             const allBody = document.getElementById('all-invoices-body');
             const countElem = document.getElementById('stat-total-count');
+            const validCommElem = document.getElementById('stat-valid-comm');
+            const lostCommElem = document.getElementById('stat-lost-comm');
             const totalCommElem = document.getElementById('stat-total-comm');
             
             let commTotal = 0;
+            let validCommTotal = 0;
+            let lostCommTotal = 0;
+
             if(countElem) countElem.innerText = invoices.length;
 
             if(allBody) {
+                const today = new Date();
                 allBody.innerHTML = invoices.map(inv => {
                     const cust = customers.find(c => c.id == inv.customer_id) || {};
                     const comm = (Number(inv.amount || 0) * 0.05);
                     commTotal += comm;
+
+                    // احتساب المهلة بناءً على تاريخ الفاتورة والإعدادات
+                    let isExpired = false;
+                    if(inv.invoice_date) {
+                        const invDate = new Date(inv.invoice_date);
+                        const diffTime = Math.abs(today - invDate);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        if(diffDays > commissionLimitDays) isExpired = true;
+                    }
+
+                    if(isExpired) lostCommTotal += comm;
+                    else validCommTotal += comm;
+
                     return `
                         <tr>
                             <td class="p-3 font-bold">${inv.invoice_number || inv.id}</td>
@@ -455,12 +521,18 @@
                             <td class="p-3">${inv.invoice_date || '-'}</td>
                             <td class="p-3 font-extrabold">${Number(inv.amount || 0).toLocaleString()}</td>
                             <td class="p-3 text-emerald-600 font-bold">${comm.toLocaleString()}</td>
-                            <td class="p-3"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px]">مسجلة</span></td>
+                            <td class="p-3">
+                                ${isExpired 
+                                    ? `<span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded text-[10px]">منتهية (${commissionLimitDays} يوم)</span>` 
+                                    : `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px]">سارية ومستحقة</span>`}
+                            </td>
                         </tr>
                     `;
                 }).join('');
             }
 
+            if(validCommElem) validCommElem.innerText = validCommTotal.toLocaleString();
+            if(lostCommElem) lostCommElem.innerText = lostCommTotal.toLocaleString();
             if(totalCommElem) totalCommElem.innerText = commTotal.toLocaleString();
         }
 
