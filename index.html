@@ -403,7 +403,7 @@
                 }
 
                 // نص واتساب العميل
-                const custMsg = encodeURIComponent(`أهلاً بك ${cust.name || ''}، نود تذكيركم بالفاتورة رقم (${inv.invoice_number}) بتاريخ ${inv.invoice_date} بمبلغ (${inv.amount}). المتبقي على مهلة التواصل: ${remainingDays > 0 ? remainingDays : 0} أيام.`);
+                const custMsg = encodeURIComponent(`أهلاً بك ${cust.name || ''}، نود تذكيركم بالفاتورة رقم (${inv.invoice_number}) بتاريخ ${inv.invoice_date} بمبلغ (${inv.amount}). المتبقي على مهلة السداد: ${remainingDays > 0 ? remainingDays : 0} أيام.`);
                 const custWhatsappUrl = `https://wa.me/${cust.phone}?text=${custMsg}`;
 
                 return `
