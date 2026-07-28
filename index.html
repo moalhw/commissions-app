@@ -139,7 +139,7 @@
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-right text-xs">
-                        <thead class="bg-slate-50 text-slate-500 font-bold border-b">
+                        <thead class="bg-slate-50 text-slate-500 font-bold border-b hidden sm:table-header-group">
                             <tr>
                                 <th class="p-3">رقم الفاتورة</th>
                                 <th class="p-3">اسم العميل</th>
@@ -355,7 +355,7 @@
             renderAccountants();
         }
 
-        // 3. عرض وتطبيق شاشة الفواتير والفلترة
+        // 3. عرض وتطبيق شاشة الفواتير والفلترة (تم التعديل لتكون متجاوبة للجوال)
         function renderInvoices() {
             const body = document.getElementById('invoices-table-body');
             const repFilter = document.getElementById('filter-rep').value;
@@ -407,7 +407,36 @@
                 const custWhatsappUrl = `https://wa.me/${cust.phone}?text=${custMsg}`;
 
                 return `
-                    <tr>
+                    <!-- 1. عرض كبطاقة للشاشات الصغيرة (الجوال) -->
+                    <div class="sm:hidden bg-slate-50 p-4 rounded-xl border border-slate-200 mb-3 space-y-2 text-xs shadow-sm">
+                        <div class="flex justify-between items-center border-b pb-2">
+                            <span class="font-extrabold text-indigo-900 text-sm"># ${inv.invoice_number}</span>
+                            <div>${statusBadge}</div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-1 text-slate-700">
+                            <p><span class="text-slate-400 font-bold">العميل:</span> ${cust.name || '-'}</p>
+                            <p><span class="text-slate-400 font-bold">المندوب:</span> ${repUser.full_name || repUser.username || '-'}</p>
+                            <p><span class="text-slate-400 font-bold">التاريخ:</span> ${inv.invoice_date}</p>
+                            <p><span class="text-slate-400 font-bold">المبلغ:</span> <strong class="text-indigo-900">${Number(inv.amount).toLocaleString()}</strong></p>
+                        </div>
+                        <div class="pt-2 border-t flex gap-2 no-print">
+                            <a href="${custWhatsappUrl}" target="_blank" class="flex-1 text-center bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 rounded-lg text-[11px]">
+                                📲 تذكير العميل
+                            </a>
+                            ${!isPaid ? `
+                                <button onclick="markAsPaid(${inv.id})" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg text-[11px]">
+                                    ✔ تم السداد
+                                </button>
+                            ` : `
+                                <button onclick="sendToAccountant('${inv.invoice_number}', '${cust.name}', '${inv.amount}')" class="flex-1 bg-slate-700 hover:bg-slate-800 text-white font-bold py-2 rounded-lg text-[11px]">
+                                    📩 إرسال للمحاسب
+                                </button>
+                            `}
+                        </div>
+                    </div>
+
+                    <!-- 2. عرض كسطر جدول للشاشات الكبيرة (الكمبيوتر) -->
+                    <tr class="hidden sm:table-row">
                         <td class="p-3 font-bold">${inv.invoice_number}</td>
                         <td class="p-3">${cust.name || '-'}</td>
                         <td class="p-3">${repUser.full_name || repUser.username || '-'}</td>
